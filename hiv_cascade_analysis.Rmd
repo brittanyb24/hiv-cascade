@@ -17,12 +17,40 @@ library(plotly)
 # get working directory
 getwd()
 
-# import data sets
+# import national data sets
 treat_cascade_all <- read_csv("data/treatment_cascade_all_ages.csv")
+treat_cascade_m_adult <- read_csv("data/treatment_cascade_male_adults.csv")
+treat_cascade_f_adult <- read_csv("data/treatment_cascade_female_adults.csv")
 test_treat_cascade_all <- read_csv("data/test_and_treat_cascade_all_ages.csv")
+test_treat_cascade_m_adult <- read_csv("data/test_and_treat_cascade_male_adults.csv")
+test_treat_cascade_f_adult <- read_csv("data/test_and_treat_cascade_female_adults.csv")
 know_status_all <- read_csv("data/know_status_all_ages.csv")
 on_art_all <- read_csv("data/receive_art_all_ages.csv")
 vl_suppress_all <- read_csv("data/vl_supression_total_hiv_all_ages.csv")
+
+# import regional data sets
+treat_cascade_all_global <- read_csv("data/treatment_cascade_global_all_ages.csv")
+treat_cascade_m_adult_global <- read_csv("data/treatment_cascade_global_male_adults.csv")
+treat_cascade_f_adult_global <- read_csv("data/treatment_cascade_global_female_adults.csv")
+test_treat_cascade_all_global <- read_csv("data/test_and_treat_cascade_global_all_ages.csv")
+test_treat_cascade_m_adult_global <- read_csv("data/test_and_treat_cascade_global_male_adults.csv")
+test_treat_cascade_f_adult_global <- read_csv("data/test_and_treat_cascade_global_female_adults.csv")
+know_status_all_global <- read_csv("data/know_status_global_all_ages.csv")
+on_art_all_global <- read_csv("data/receive_art_global_all_ages.csv")
+vl_suppress_all_global <- read_csv("data/vl_supression_total_hiv_global_all_ages.csv")
+
+# create list of datasets
+data_list <- list(treat_cascade_all, treat_cascade_m_adult, treat_cascade_f_adult, test_treat_cascade_all, test_treat_cascade_m_adult, test_treat_cascade_f_adult, know_status_all, on_art_all, vl_suppress_all, treat_cascade_all_global, treat_cascade_m_adult_global, treat_cascade_f_adult_global, test_treat_cascade_all_global, test_treat_cascade_m_adult_global, test_treat_cascade_f_adult_global, know_status_all_global, on_art_all_global, vl_suppress_all_global)
+```
+
+
+```{r tidy raw data}
+# view raw datasets
+map(data_list, glimpse)
+
+# replace "..." values with NA for all datasets
+data_list <- map(data_list, na_if, "...")
+
 ```
 
 
