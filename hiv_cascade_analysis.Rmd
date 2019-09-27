@@ -13,20 +13,10 @@ This file is an analysis of HIV treatment cascade data from UNAIDS from 2015-201
 library(tidyverse)
 library(shiny)
 library(plotly)
+library(scales)
 
 # get working directory
 getwd()
-
-# import national data sets
-treat_cascade_all <- read_csv("data/treatment_cascade_all_ages.csv")
-treat_cascade_m_adult <- read_csv("data/treatment_cascade_male_adults.csv")
-treat_cascade_f_adult <- read_csv("data/treatment_cascade_female_adults.csv")
-test_treat_cascade_all <- read_csv("data/test_and_treat_cascade_all_ages.csv")
-test_treat_cascade_m_adult <- read_csv("data/test_and_treat_cascade_male_adults.csv")
-test_treat_cascade_f_adult <- read_csv("data/test_and_treat_cascade_female_adults.csv")
-know_status_all <- read_csv("data/know_status_all_ages.csv")
-on_art_all <- read_csv("data/receive_art_all_ages.csv")
-vl_suppress_all <- read_csv("data/vl_supression_total_hiv_all_ages.csv")
 
 # import regional data sets
 treat_cascade_all_global <- read_csv("data/treatment_cascade_global_all_ages.csv")
@@ -39,65 +29,390 @@ know_status_all_global <- read_csv("data/know_status_global_all_ages.csv")
 on_art_all_global <- read_csv("data/receive_art_global_all_ages.csv")
 vl_suppress_all_global <- read_csv("data/vl_supression_total_hiv_global_all_ages.csv")
 
-# create list of datasets
-data_list <- list(treat_cascade_all, treat_cascade_m_adult, treat_cascade_f_adult, test_treat_cascade_all, test_treat_cascade_m_adult, test_treat_cascade_f_adult, know_status_all, on_art_all, vl_suppress_all, treat_cascade_all_global, treat_cascade_m_adult_global, treat_cascade_f_adult_global, test_treat_cascade_all_global, test_treat_cascade_m_adult_global, test_treat_cascade_f_adult_global, know_status_all_global, on_art_all_global, vl_suppress_all_global)
+# import national data sets
+treat_cascade_all <- read_csv("data/treatment_cascade_all_ages.csv")
+treat_cascade_m_adult <- read_csv("data/treatment_cascade_male_adults.csv")
+treat_cascade_f_adult <- read_csv("data/treatment_cascade_female_adults.csv")
+test_treat_cascade_all <- read_csv("data/test_and_treat_cascade_all_ages.csv")
+test_treat_cascade_m_adult <- read_csv("data/test_and_treat_cascade_male_adults.csv")
+test_treat_cascade_f_adult <- read_csv("data/test_and_treat_cascade_female_adults.csv")
+know_status_all <- read_csv("data/know_status_all_ages.csv")
+on_art_all <- read_csv("data/receive_art_all_ages.csv")
+vl_suppress_all <- read_csv("data/vl_supression_total_hiv_all_ages.csv")
 ```
 
 
-```{r tidy raw data}
+```{r explore data}
+# create list of global datasets
+global_data_list <- list(treat_cascade_all_global, treat_cascade_m_adult_global, treat_cascade_f_adult_global, test_treat_cascade_all_global, test_treat_cascade_m_adult_global, test_treat_cascade_f_adult_global, know_status_all_global, on_art_all_global, vl_suppress_all_global)
+
+global_list_names <- c("treat_cascade_all_global", "treat_cascade_m_adult_global", "treat_cascade_f_adult_global", "test_treat_cascade_all_global", "test_treat_cascade_m_adult_global", "test_treat_cascade_f_adult_global", "know_status_all_global", "on_art_all_global", "vl_suppress_all_global")
+
+names(global_data_list) <- global_list_names
+
+# create list of country datasets
+country_data_list <- list(treat_cascade_all, treat_cascade_m_adult, treat_cascade_f_adult, test_treat_cascade_all, test_treat_cascade_m_adult, test_treat_cascade_f_adult, know_status_all, on_art_all, vl_suppress_all) 
+
+country_list_names <- c("treat_cascade_all", "treat_cascade_m_adult", "treat_cascade_f_adult", "test_treat_cascade_all", "test_treat_cascade_m_adult", "test_treat_cascade_f_adult", "know_status_all", "on_art_all", "vl_suppress_all") 
+
+names(country_data_list) <- country_list_names
+
 # view raw datasets
-map(data_list, glimpse)
+map(global_data_list, glimpse)
+map(country_data_list, glimpse)
 
-# replace "..." values with NA for all datasets
-data_list <- map(data_list, na_if, "...")
-
+# clear lists to free space
+rm(global_data_list, country_data_list)
 ```
 
 
-This R Markdown document is made interactive using Shiny. Unlike the more traditional workflow of creating static reports, you can now create documents that allow your readers to change the assumptions underlying your analysis and see the results immediately. 
+```{r create new composite data frames}
+# create functions for cleaning test_treat datasets to combine with treat datasets
+trim_test_treat_global <- function(data) {
+  data %>%
+    select(Region = X1, ends_with("_1"), ends_with("_2")) %>%
+    rename_at(vars(ends_with("_1")), str_replace, "_1", "_hiv_on_art") %>% 
+    rename_at(vars(ends_with("_2")), str_replace, "_2", "_hiv_vl_suppress") %>%
+    filter(Region != "Region")
+}
 
-To learn more, see [Interactive Documents](http://rmarkdown.rstudio.com/authoring_shiny.html).
+trim_test_treat_country <- function(data) {
+  data %>%
+    select(Country = X1, ends_with("_1"), ends_with("_2")) %>%
+    rename_at(vars(ends_with("_1")), str_replace, "_1", "_hiv_on_art") %>% 
+    rename_at(vars(ends_with("_2")), str_replace, "_2", "_hiv_vl_suppress") %>%
+    filter(Country != "Country")
+}
 
-## Inputs and Outputs
+# create functions for cleaning treat datasets to combine with test_treat datasets
+trim_treat_global <- function(data) {
+  data %>%
+    rename(Region = X1) %>%
+    rename_at(vars(-Region, -ends_with("_1"), -ends_with("_2")), str_c, "_know_status") %>% 
+    rename_at(vars(ends_with("_1")), str_replace, "_1", "_know_status_on_art") %>% 
+    rename_at(vars(ends_with("_2")), str_replace, "_2", "_on_art_vl_suppress") %>%
+    filter(Region != "Region")
+}
 
-You can embed Shiny inputs and outputs in your document. Outputs are automatically updated whenever inputs change.  This demonstrates how a standard R plot can be made interactive by wrapping it in the Shiny `renderPlot` function. The `selectInput` and `sliderInput` functions create the input widgets used to drive the plot.
+trim_treat_country <- function(data) {
+  data %>%
+    rename(Country = X1) %>%
+    rename_at(vars(-Country, -ends_with("_1"), -ends_with("_2")), str_c, "_know_status") %>% 
+    rename_at(vars(ends_with("_1")), str_replace, "_1", "_know_status_on_art") %>% 
+    rename_at(vars(ends_with("_2")), str_replace, "_2", "_on_art_vl_suppress") %>%
+    filter(Country != "Country")
+}
 
-```{r eruptions, echo=FALSE}
-inputPanel(
-  selectInput("n_breaks", label = "Number of bins:",
-              choices = c(10, 20, 35, 50), selected = 20),
-  
-  sliderInput("bw_adjust", label = "Bandwidth adjustment:",
-              min = 0.2, max = 2, value = 1, step = 0.2)
-)
+# create lists of composite data sets 
+treat_cascade_country_list <- list(treat_cascade_all, treat_cascade_f_adult, treat_cascade_m_adult)
+names(treat_cascade_country_list) <- c("treat_cascade_all", "treat_cascade_f_adult", "treat_cascade_m_adult")
 
-renderPlot({
-  hist(faithful$eruptions, probability = TRUE, breaks = as.numeric(input$n_breaks),
-       xlab = "Duration (minutes)", main = "Geyser eruption duration")
-  
-  dens <- density(faithful$eruptions, adjust = input$bw_adjust)
-  lines(dens, col = "blue")
-})
+treat_cascade_global_list <- list(treat_cascade_all_global, treat_cascade_f_adult_global, treat_cascade_m_adult_global)
+names(treat_cascade_global_list) <- c("treat_cascade_all_global", "treat_cascade_f_adult_global", "treat_cascade_m_adult_global")
+
+test_treat_cascade_country_list <- list(test_treat_cascade_all, test_treat_cascade_f_adult, test_treat_cascade_m_adult)
+names(test_treat_cascade_country_list) <- c("test_treat_cascade_all", "test_treat_cascade_f_adult", "test_treat_cascade_m_adult")
+
+test_treat_cascade_global_list <- list(test_treat_cascade_all_global, test_treat_cascade_f_adult_global, test_treat_cascade_m_adult_global)
+names(test_treat_cascade_global_list) <- c("test_treat_cascade_all_global", "test_treat_cascade_f_adult_global", "test_treat_cascade_m_adult_global")
+
+# trim composite datasets
+treat_cascade_country_list_trimmed <- map(treat_cascade_country_list, trim_treat_country)
+
+treat_cascade_global_list_trimmed <- map(treat_cascade_global_list, trim_treat_global)
+
+test_treat_cascade_country_list_trimmed <- map(test_treat_cascade_country_list, trim_test_treat_country)
+
+test_treat_cascade_global_list_trimmed <- map(test_treat_cascade_global_list, trim_test_treat_global)
+
+# separate into individual data frames
+list2env(treat_cascade_country_list_trimmed, envir = .GlobalEnv)
+list2env(treat_cascade_global_list_trimmed, envir = .GlobalEnv)
+list2env(test_treat_cascade_country_list_trimmed, envir = .GlobalEnv)
+list2env(test_treat_cascade_global_list_trimmed, envir = .GlobalEnv)
+
+# add sex and age columns
+list_all_ages <- list(treat_cascade_all, treat_cascade_all_global, test_treat_cascade_all, test_treat_cascade_all_global)
+names(list_all_ages) <- c("treat_cascade_all", "treat_cascade_all_global", "test_treat_cascade_all", "test_treat_cascade_all_global")
+map(list_all_ages, mutate, sex = "all", age = "all") %>%
+  list2env(envir = .GlobalEnv)
+
+list_m_adult <- list(treat_cascade_m_adult, treat_cascade_m_adult_global, test_treat_cascade_m_adult, test_treat_cascade_m_adult_global)
+names(list_m_adult) <- c("treat_cascade_m_adult", "treat_cascade_m_adult_global", "test_treat_cascade_m_adult", "test_treat_cascade_m_adult_global")
+map(list_m_adult, mutate, sex = "male", age = "adult") %>%
+  list2env(envir = .GlobalEnv)
+
+list_f_adult <- list(treat_cascade_f_adult, treat_cascade_f_adult_global, test_treat_cascade_f_adult, test_treat_cascade_f_adult_global)
+names(list_f_adult) <- c("treat_cascade_f_adult", "treat_cascade_f_adult_global", "test_treat_cascade_f_adult", "test_treat_cascade_f_adult_global")
+map(list_f_adult, mutate, sex = "female", age = "adult") %>%
+  list2env(envir = .GlobalEnv)
+
+# join datasets to create full cascade datasets for global datasets
+full_cascade_all_global <- full_join(treat_cascade_all_global, 
+                                     test_treat_cascade_all_global, 
+                                     by = c("Region", "age", "sex"))
+
+full_cascade_m_adult_global <- full_join(treat_cascade_m_adult_global,
+                                         test_treat_cascade_m_adult_global, 
+                                         by = c("Region", "age", "sex"))
+
+full_cascade_f_adult_global <- full_join(treat_cascade_f_adult_global, 
+                                         test_treat_cascade_f_adult_global, 
+                                         by = c("Region", "age", "sex"))
+
+# union global datasets to include sex and age data in a single dataset
+full_cascade_global <- union(full_cascade_all_global,
+                                 full_cascade_m_adult_global) %>%
+                       union(full_cascade_f_adult_global)
 ```
 
-## Embedded Application
 
-It's also possible to embed an entire Shiny application within an R Markdown document using the `shinyAppDir` function. This example embeds a Shiny application located in another directory:
+```{r reshape and tidy global composite data}
+# create function to tidy composite global dataset
+tidy_composite <- function(data) {
+  data %>%
+    # replace "..." values with NA
+    na_if("...") %>%
+    # gather by metric types
+    gather(key = "year_hiv_vl_suppress", value = "estimate_hiv_vl_suppress", ends_with(("_hiv_vl_suppress"))) %>%
+    gather(key = "year_hiv_on_art", value = "estimate_hiv_on_art", ends_with(("_hiv_on_art"))) %>% 
+    gather(key = "year_on_art_vl_suppress", value = "estimate_on_art_vl_suppress", ends_with(("_on_art_vl_suppress"))) %>%
+    gather(key = "year_know_status_on_art", value = "estimate_know_status_on_art", ends_with(("_know_status_on_art"))) %>% 
+    gather(key = "year_know_status", value = "estimate_know_status", ends_with(("_know_status"))) %>% 
+    # remove "_on_art_vl_suppress", "_know_status_on_art", and "_know_status" from year columns
+    map(str_replace_all, "_hiv_vl_suppress", "") %>% 
+    map(str_replace_all, "_hiv_on_art", "") %>%
+    map(str_replace_all, "_on_art_vl_suppress", "") %>% 
+    map(str_replace_all, "_know_status_on_art", "") %>%
+    map(str_replace_all, "_know_status", "") %>%
+    # remove any "<" or ">" characters (just set to value)
+    map(str_replace_all, "<", "") %>%
+    map(str_replace_all, ">", "") %>%
+    # convert vectorized data into a tibble
+    as_tibble() %>% 
+    # filter so that years match for all metrics
+    filter(year_hiv_vl_suppress ==  year_hiv_on_art & 
+           year_hiv_vl_suppress ==  year_on_art_vl_suppress &
+           year_hiv_vl_suppress == year_know_status_on_art &
+           year_hiv_vl_suppress == year_know_status) %>% 
+    # gather all estimates and create a column for the metric type
+    gather(key = "metric_type", value = "metric_value", starts_with("estimate_")) %>%
+    # drop redundant year columns
+    select(-year_hiv_vl_suppress, -year_hiv_on_art, -year_on_art_vl_suppress, -year_know_status_on_art) %>%
+    # spread into estimate, upper, and lower columns
+    spread(key = year_know_status, metric_value) %>%
+    # gather all lower_ci estimates, upper_ci estimates, and center_estimates
+    gather(key = "year_lower", value = "lower_ci", contains(("_lower"))) %>% 
+    gather(key = "year_upper", value = "upper_ci", contains(("_upper"))) %>% 
+    gather(key = "year", value = "estimate", starts_with("20")) %>% 
+    # remove "_lower" and "_upper" suffixes to get years
+    map(str_replace_all, "_lower", "") %>% 
+    map(str_replace_all, "_upper", "") %>%
+    # convert vectorized data into a tibble
+    as_tibble() %>% 
+    # filter so that years match for estimate, lower_ci, and "upper_ci"
+    filter(year == year_upper & year == year_lower) %>% 
+    # select and reorder columns
+    select(1, year, metric_type, estimate, lower_ci, upper_ci, sex, age) %>%
+    # convert columns to appropriate data classes
+    mutate(year = as.factor(year),
+           estimate = as.numeric(estimate),
+           lower_ci = as.numeric(lower_ci),
+           upper_ci = as.numeric(upper_ci))
+}
 
-```{r tabsets, echo=FALSE}
-shinyAppDir(
-  system.file("examples/06_tabsets", package = "shiny"),
-  options = list(
-    width = "100%", height = 550
-  )
-)
+# tidy global composite data sets
+full_cascade_global_tidy <- tidy_composite(full_cascade_global)
+write_rds(full_cascade_global_tidy, "data/full_cascade_global_tidy")
 ```
 
-Note the use of the `height` parameter to determine how much vertical space the embedded application should occupy.
+```{r reshape and tidy country composite data}
+# create function to tidy country treat datasets
+tidy_treat <- function(data) {
+  data %>%
+    # replace "..." values with NA
+    na_if("...") %>%
+    # gather by metric types
+    gather(key = "year_on_art_vl_suppress", value = "estimate_on_art_vl_suppress", ends_with(("_on_art_vl_suppress"))) %>%
+    gather(key = "year_know_status_on_art", value = "estimate_know_status_on_art", ends_with(("_know_status_on_art"))) %>% 
+    gather(key = "year_know_status", value = "estimate_know_status", ends_with(("_know_status"))) %>% 
+    # remove "_on_art_vl_suppress", "_know_status_on_art", and "_know_status" from year columns
+    map(str_replace_all, "_on_art_vl_suppress", "") %>% 
+    map(str_replace_all, "_know_status_on_art", "") %>%
+    map(str_replace_all, "_know_status", "") %>%
+    # remove any "<" or ">" characters (just set to value)
+    map(str_replace_all, "<", "") %>%
+    map(str_replace_all, ">", "") %>%
+    # convert vectorized data into a tibble
+    as_tibble() %>% 
+    # filter so that years match for all metrics
+    filter(year_on_art_vl_suppress == year_know_status_on_art &
+           year_on_art_vl_suppress == year_know_status) %>% 
+    # gather all estimates and create a column for the metric type
+    gather(key = "metric_type", value = "metric_value", starts_with("estimate_")) %>%
+    # drop redundant year columns
+    select(-year_on_art_vl_suppress, -year_know_status_on_art) %>%
+    # spread into estimate, upper, and lower columns
+    spread(key = year_know_status, metric_value) %>%
+    # gather all lower_ci estimates, upper_ci estimates, and center_estimates
+    gather(key = "year_lower", value = "lower_ci", contains(("_lower"))) %>% 
+    gather(key = "year_upper", value = "upper_ci", contains(("_upper"))) %>% 
+    gather(key = "year", value = "estimate", starts_with("20")) %>% 
+    # remove "_lower" and "_upper" suffixes to get years
+    map(str_replace_all, "_lower", "") %>% 
+    map(str_replace_all, "_upper", "") %>%
+    # convert vectorized data into a tibble
+    as_tibble() %>% 
+    # filter so that years match for estimate, lower_ci, and "upper_ci"
+    filter(year == year_upper & year == year_lower) %>% 
+    # select and reorder columns
+    select(1, year, metric_type, estimate, lower_ci, upper_ci, sex, age) %>%
+    # convert columns to appropriate data classes
+    mutate(year = as.factor(year),
+           estimate = as.numeric(estimate),
+           lower_ci = as.numeric(lower_ci),
+           upper_ci = as.numeric(upper_ci))
+}
 
-You can also use the `shinyApp` function to define an application inline rather then in an external directory.
+# apply tidy_treat function to all country treatment cascade datasets
+treat_cascade_country_list_tidy <- map(treat_cascade_country_list, tidy_treat)
+names(treat_cascade_country_list_tidy) <- map_chr(names(treat_cascade_country_list_tidy), paste0, "_tidy")
 
-In all of R code chunks above the `echo = FALSE` attribute is used. This is to prevent the R code within the chunk from rendering in the document alongside the Shiny components.
+# create function to tidy country test_treat datasets
+tidy_test_treat <- function(data) {
+  data %>%
+    # replace "..." values with NA
+    na_if("...") %>%
+    # gather by metric types
+    gather(key = "year_hiv_vl_suppress", value = "estimate_hiv_vl_suppress", ends_with(("_hiv_vl_suppress"))) %>%
+    gather(key = "year_hiv_on_art", value = "estimate_hiv_on_art", ends_with(("_hiv_on_art"))) %>% 
+    # remove "_on_art_vl_suppress", "_know_status_on_art", and "_know_status" from year columns
+    map(str_replace_all, "_hiv_vl_suppress", "") %>% 
+    map(str_replace_all, "_hiv_on_art", "") %>%
+    # remove any "<" or ">" characters (just set to value)
+    map(str_replace_all, "<", "") %>%
+    map(str_replace_all, ">", "") %>%
+    # convert vectorized data into a tibble
+    as_tibble() %>% 
+    # filter so that years match for all metrics
+    filter(year_hiv_vl_suppress ==  year_hiv_on_art) %>% 
+    # gather all estimates and create a column for the metric type
+    gather(key = "metric_type", value = "metric_value", starts_with("estimate_")) %>%
+    # drop redundant year columns
+    select(-year_hiv_vl_suppress) %>%
+    # spread into estimate, upper, and lower columns
+    spread(key = year_hiv_on_art, metric_value) %>%
+    # gather all lower_ci estimates, upper_ci estimates, and center_estimates
+    gather(key = "year_lower", value = "lower_ci", contains(("_lower"))) %>% 
+    gather(key = "year_upper", value = "upper_ci", contains(("_upper"))) %>% 
+    gather(key = "year", value = "estimate", starts_with("20")) %>% 
+    # remove "_lower" and "_upper" suffixes to get years
+    map(str_replace_all, "_lower", "") %>% 
+    map(str_replace_all, "_upper", "") %>%
+    # convert vectorized data into a tibble
+    as_tibble() %>% 
+    # filter so that years match for estimate, lower_ci, and "upper_ci"
+    filter(year == year_upper & year == year_lower) %>% 
+    # select and reorder columns
+    select(1, year, metric_type, estimate, lower_ci, upper_ci, sex, age) %>%
+    # convert columns to appropriate data classes
+    mutate(year = as.factor(year),
+           estimate = as.numeric(estimate),
+           lower_ci = as.numeric(lower_ci),
+           upper_ci = as.numeric(upper_ci))
+}
+
+# apply tidy_test_treat function to all country treatment cascade datasets
+test_treat_cascade_country_list_tidy <- map(test_treat_cascade_country_list, tidy_test_treat)
+names(treat_cascade_country_list_tidy) <- map_chr(names(treat_cascade_country_list_tidy), paste0, "_tidy")
 
 
+# join datasets to create full cascade datasets for country datasets
+full_cascade_all <- full_join(treat_cascade_all, 
+                              test_treat_cascade_all, 
+                              by = c("Country", "age", "sex"))
+
+full_cascade_m_adult <- full_join(treat_cascade_m_adult, 
+                                  test_treat_cascade_m_adult, 
+                                  by = c("Country", "age", "sex"))
+
+full_cascade_f_adult <- full_join(treat_cascade_f_adult, 
+                                  test_treat_cascade_f_adult, 
+                                  by = c("Country", "age", "sex"))
+
+# union country datasets to include sex and age data in a single dataset
+
+full_cascade_country_tidy <- tidy_composite(full_cascade_country)
+
+full_cascade_country <- union(full_cascade_all,
+                                 full_cascade_m_adult) %>%
+                        union(full_cascade_f_adult)
+```
+
+
+```{r reshape and tidy raw single metric data}
+# create function to tidy single metric datasets
+tidy_single <- function(data) {
+  data %>%
+    # replace "..." values with NA
+    na_if("...") %>%
+    # gather all lower_ci estimates, upper_ci estimates, and center_estimates
+    gather(key = "year_lower", value = "lower_ci", contains(("_lower"))) %>% 
+    gather(key = "year_upper", value = "upper_ci", contains(("_upper"))) %>% 
+    gather(key = "year", value = "estimate", starts_with("20")) %>% 
+    # remove "any suffixes "_upper" and "_lower"
+    map(str_replace_all, "_lower", "") %>% 
+    map(str_replace_all, "_upper", "") %>%
+    # remove any "<" or ">" characters (just set to value)
+    map(str_replace_all, "<", "") %>%
+    map(str_replace_all, ">", "") %>%
+    # convert vectorized data into a tibble
+    as_tibble() %>% 
+    # filter so that years match for estimate, lower_ci, and "upper_ci"
+    filter(year == year_upper & year == year_lower) %>% 
+    # select and reorder columns
+    select(1, year, estimate, lower_ci, upper_ci) %>%
+    # convert columns to appropriate data classes
+    mutate(year = as.factor(year),
+           estimate = as.numeric(estimate),
+           lower_ci = as.numeric(lower_ci),
+           upper_ci = as.numeric(upper_ci))
+}
+
+      
+# create list of single metric datasets
+single_data_list <- list(know_status_all_global, on_art_all_global, vl_suppress_all_global, know_status_all, on_art_all, vl_suppress_all)
+
+single_list_names <- c("know_status_all_global", "on_art_all_global", "vl_suppress_all_global", "know_status_all", "on_art_all", "vl_suppress_all")
+
+names(single_data_list) <- single_list_names
+
+# tidy single metric data sets
+single_data_list_tidy <- map(single_data_list, tidy_single)
+names(single_data_list_tidy) <- map_chr(single_list_names, paste0, "_tidy")
+
+# split lists into individual tidy data frames
+list2env(single_data_list_tidy, envir = .GlobalEnv)
+```
+
+
+```{r}
+# plot data sets
+know_status_all_global_tidy %>% 
+  ggplot(aes(x = year, y = estimate, color = Region, group = Region)) + 
+  geom_point() + 
+  geom_line() + 
+  geom_hline(yintercept = 90, alpha = 0.2) + 
+  scale_y_continuous(labels = percent_format(scale = 1), 
+                     breaks = pretty_breaks(n = 5), 
+                     expand = expansion(.2)) +
+  theme(panel.grid = element_blank(),
+        panel.background = element_blank()) +
+  scale_color_viridis_d()
+```
+
+
+```{r}
+ 
+```
 
