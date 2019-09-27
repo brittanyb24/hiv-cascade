@@ -164,6 +164,11 @@ full_cascade_f_adult_global <- full_join(treat_cascade_f_adult_global,
 full_cascade_global <- union(full_cascade_all_global,
                                  full_cascade_m_adult_global) %>%
                        union(full_cascade_f_adult_global)
+
+# remove lists to free space
+rm(treat_cascade_country_list, treat_cascade_global_list, test_treat_cascade_country_list, test_treat_cascade_global_list,
+   treat_cascade_country_list_trimmed, treat_cascade_global_list_trimmed,  test_treat_cascade_country_list_trimmed, 
+   test_treat_cascade_global_list_trimmed, list_all_ages, list_m_adult, list_f_adult)
 ```
 
 
@@ -173,7 +178,7 @@ tidy_composite <- function(data) {
   data %>%
     # replace "..." values with NA
     na_if("...") %>%
-    # gather by metric types
+    # gather by measure types
     gather(key = "year_hiv_vl_suppress", value = "estimate_hiv_vl_suppress", ends_with(("_hiv_vl_suppress"))) %>%
     gather(key = "year_hiv_on_art", value = "estimate_hiv_on_art", ends_with(("_hiv_on_art"))) %>% 
     gather(key = "year_on_art_vl_suppress", value = "estimate_on_art_vl_suppress", ends_with(("_on_art_vl_suppress"))) %>%
@@ -190,17 +195,17 @@ tidy_composite <- function(data) {
     map(str_replace_all, ">", "") %>%
     # convert vectorized data into a tibble
     as_tibble() %>% 
-    # filter so that years match for all metrics
+    # filter so that years match for all measures
     filter(year_hiv_vl_suppress ==  year_hiv_on_art & 
            year_hiv_vl_suppress ==  year_on_art_vl_suppress &
            year_hiv_vl_suppress == year_know_status_on_art &
            year_hiv_vl_suppress == year_know_status) %>% 
-    # gather all estimates and create a column for the metric type
-    gather(key = "metric_type", value = "metric_value", starts_with("estimate_")) %>%
+    # gather all estimates and create a column for the measure type
+    gather(key = "measure_type", value = "measure_value", starts_with("estimate_")) %>%
     # drop redundant year columns
     select(-year_hiv_vl_suppress, -year_hiv_on_art, -year_on_art_vl_suppress, -year_know_status_on_art) %>%
     # spread into estimate, upper, and lower columns
-    spread(key = year_know_status, metric_value) %>%
+    spread(key = year_know_status, measure_value) %>%
     # gather all lower_ci estimates, upper_ci estimates, and center_estimates
     gather(key = "year_lower", value = "lower_ci", contains(("_lower"))) %>% 
     gather(key = "year_upper", value = "upper_ci", contains(("_upper"))) %>% 
@@ -208,12 +213,13 @@ tidy_composite <- function(data) {
     # remove "_lower" and "_upper" suffixes to get years
     map(str_replace_all, "_lower", "") %>% 
     map(str_replace_all, "_upper", "") %>%
+    map(str_replace_all, "estimate_", "") %>%
     # convert vectorized data into a tibble
     as_tibble() %>% 
     # filter so that years match for estimate, lower_ci, and "upper_ci"
     filter(year == year_upper & year == year_lower) %>% 
     # select and reorder columns
-    select(1, year, metric_type, estimate, lower_ci, upper_ci, sex, age) %>%
+    select(1, year, measure_type, estimate, lower_ci, upper_ci, sex, age) %>%
     # convert columns to appropriate data classes
     mutate(year = as.factor(year),
            estimate = as.numeric(estimate),
@@ -226,13 +232,14 @@ full_cascade_global_tidy <- tidy_composite(full_cascade_global)
 write_rds(full_cascade_global_tidy, "data/full_cascade_global_tidy")
 ```
 
+
 ```{r reshape and tidy country composite data}
 # create function to tidy country treat datasets
 tidy_treat <- function(data) {
   data %>%
     # replace "..." values with NA
     na_if("...") %>%
-    # gather by metric types
+    # gather by measure types
     gather(key = "year_on_art_vl_suppress", value = "estimate_on_art_vl_suppress", ends_with(("_on_art_vl_suppress"))) %>%
     gather(key = "year_know_status_on_art", value = "estimate_know_status_on_art", ends_with(("_know_status_on_art"))) %>% 
     gather(key = "year_know_status", value = "estimate_know_status", ends_with(("_know_status"))) %>% 
@@ -245,15 +252,15 @@ tidy_treat <- function(data) {
     map(str_replace_all, ">", "") %>%
     # convert vectorized data into a tibble
     as_tibble() %>% 
-    # filter so that years match for all metrics
+    # filter so that years match for all measures
     filter(year_on_art_vl_suppress == year_know_status_on_art &
            year_on_art_vl_suppress == year_know_status) %>% 
-    # gather all estimates and create a column for the metric type
-    gather(key = "metric_type", value = "metric_value", starts_with("estimate_")) %>%
+    # gather all estimates and create a column for the measure type
+    gather(key = "measure_type", value = "measure_value", starts_with("estimate_")) %>%
     # drop redundant year columns
     select(-year_on_art_vl_suppress, -year_know_status_on_art) %>%
     # spread into estimate, upper, and lower columns
-    spread(key = year_know_status, metric_value) %>%
+    spread(key = year_know_status, measure_value) %>%
     # gather all lower_ci estimates, upper_ci estimates, and center_estimates
     gather(key = "year_lower", value = "lower_ci", contains(("_lower"))) %>% 
     gather(key = "year_upper", value = "upper_ci", contains(("_upper"))) %>% 
@@ -261,12 +268,13 @@ tidy_treat <- function(data) {
     # remove "_lower" and "_upper" suffixes to get years
     map(str_replace_all, "_lower", "") %>% 
     map(str_replace_all, "_upper", "") %>%
+    map(str_replace_all, "estimate_", "") %>%
     # convert vectorized data into a tibble
     as_tibble() %>% 
     # filter so that years match for estimate, lower_ci, and "upper_ci"
     filter(year == year_upper & year == year_lower) %>% 
     # select and reorder columns
-    select(1, year, metric_type, estimate, lower_ci, upper_ci, sex, age) %>%
+    select(1, year, measure_type, estimate, lower_ci, upper_ci, sex, age) %>%
     # convert columns to appropriate data classes
     mutate(year = as.factor(year),
            estimate = as.numeric(estimate),
@@ -275,18 +283,17 @@ tidy_treat <- function(data) {
 }
 
 # apply tidy_treat function to all country treatment cascade datasets
-treat_cascade_country_list_tidy <- map(list(treat_cascade_all, treat_cascade_f_adult, treat_cascade_m_adult), tidy_treat)
+treat_cascade_all_tidy <- tidy_treat(treat_cascade_all)
+treat_cascade_m_adult_tidy <- tidy_treat(treat_cascade_m_adult)
+treat_cascade_f_adult_tidy <- tidy_treat(treat_cascade_f_adult)
 
-# separate into individual data frames
-names(treat_cascade_country_list_tidy) <- map_chr(names(treat_cascade_country_list), paste0, "_tidy")
-list2env(treat_cascade_country_list_tidy, envir = .GlobalEnv)
 
 # create function to tidy country test_treat datasets
 tidy_test_treat <- function(data) {
   data %>%
     # replace "..." values with NA
     na_if("...") %>%
-    # gather by metric types
+    # gather by measure types
     gather(key = "year_hiv_vl_suppress", value = "estimate_hiv_vl_suppress", ends_with(("_hiv_vl_suppress"))) %>%
     gather(key = "year_hiv_on_art", value = "estimate_hiv_on_art", ends_with(("_hiv_on_art"))) %>% 
     # remove "_on_art_vl_suppress", "_know_status_on_art", and "_know_status" from year columns
@@ -297,14 +304,14 @@ tidy_test_treat <- function(data) {
     map(str_replace_all, ">", "") %>%
     # convert vectorized data into a tibble
     as_tibble() %>% 
-    # filter so that years match for all metrics
+    # filter so that years match for all measures
     filter(year_hiv_vl_suppress ==  year_hiv_on_art) %>% 
-    # gather all estimates and create a column for the metric type
-    gather(key = "metric_type", value = "metric_value", starts_with("estimate_")) %>%
+    # gather all estimates and create a column for the measure type
+    gather(key = "measure_type", value = "measure_value", starts_with("estimate_")) %>%
     # drop redundant year columns
     select(-year_hiv_vl_suppress) %>%
     # spread into estimate, upper, and lower columns
-    spread(key = year_hiv_on_art, metric_value) %>%
+    spread(key = year_hiv_on_art, measure_value) %>%
     # gather all lower_ci estimates, upper_ci estimates, and center_estimates
     gather(key = "year_lower", value = "lower_ci", contains(("_lower"))) %>% 
     gather(key = "year_upper", value = "upper_ci", contains(("_upper"))) %>% 
@@ -312,12 +319,13 @@ tidy_test_treat <- function(data) {
     # remove "_lower" and "_upper" suffixes to get years
     map(str_replace_all, "_lower", "") %>% 
     map(str_replace_all, "_upper", "") %>%
+    map(str_replace_all, "estimate_", "") %>%
     # convert vectorized data into a tibble
     as_tibble() %>% 
     # filter so that years match for estimate, lower_ci, and "upper_ci"
     filter(year == year_upper & year == year_lower) %>% 
     # select and reorder columns
-    select(1, year, metric_type, estimate, lower_ci, upper_ci, sex, age) %>%
+    select(1, year, measure_type, estimate, lower_ci, upper_ci, sex, age) %>%
     # convert columns to appropriate data classes
     mutate(year = as.factor(year),
            estimate = as.numeric(estimate),
@@ -329,7 +337,7 @@ tidy_test_treat <- function(data) {
 test_treat_cascade_country_list_tidy <- map(list(test_treat_cascade_all, test_treat_cascade_f_adult, test_treat_cascade_m_adult), tidy_test_treat)
 
 # separate into individual data frames
-names(test_treat_cascade_country_list_tidy) <- map_chr(names(treat_cascade_country_list), paste0, "_tidy")
+names(test_treat_cascade_country_list_tidy) <- map_chr(c("test_treat_cascade_all", "test_treat_cascade_f_adult", "test_treat_cascade_m_adult"), paste0, "_tidy")
 list2env(test_treat_cascade_country_list_tidy, envir = .GlobalEnv)
 
 # create union of datasets to create full cascade for country datasets
@@ -352,8 +360,8 @@ write_rds(full_cascade_country_tidy, "data/full_cascade_country_tidy")
 ```
 
 
-```{r reshape and tidy raw single metric data}
-# create function to tidy single metric datasets
+```{r reshape and tidy raw single measure data}
+# create function to tidy single measure datasets
 tidy_single <- function(data) {
   data %>%
     # replace "..." values with NA
@@ -382,14 +390,14 @@ tidy_single <- function(data) {
 }
 
       
-# create list of single metric datasets
+# create list of single measure datasets
 single_data_list <- list(know_status_all_global, on_art_all_global, vl_suppress_all_global, know_status_all, on_art_all, vl_suppress_all)
 
 single_list_names <- c("know_status_all_global", "on_art_all_global", "vl_suppress_all_global", "know_status_all", "on_art_all", "vl_suppress_all")
 
 names(single_data_list) <- single_list_names
 
-# tidy single metric data sets
+# tidy single measure data sets
 single_data_list_tidy <- map(single_data_list, tidy_single)
 names(single_data_list_tidy) <- map_chr(single_list_names, paste0, "_tidy")
 
@@ -414,8 +422,7 @@ know_status_all_global_tidy %>%
 ```
 
 To Do:
--rename metric_type to measure in functions
--drop "estimate_" prefix from measure column
+
 -add some rm() functions to clean stray objects from the environment
 -check if single metric sets match filtered versions of composite datasets
 -create single metric datasets for missing measures by subsetting composite datasets
