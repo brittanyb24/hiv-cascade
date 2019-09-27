@@ -275,8 +275,11 @@ tidy_treat <- function(data) {
 }
 
 # apply tidy_treat function to all country treatment cascade datasets
-treat_cascade_country_list_tidy <- map(treat_cascade_country_list, tidy_treat)
-names(treat_cascade_country_list_tidy) <- map_chr(names(treat_cascade_country_list_tidy), paste0, "_tidy")
+treat_cascade_country_list_tidy <- map(list(treat_cascade_all, treat_cascade_f_adult, treat_cascade_m_adult), tidy_treat)
+
+# separate into individual data frames
+names(treat_cascade_country_list_tidy) <- map_chr(names(treat_cascade_country_list), paste0, "_tidy")
+list2env(treat_cascade_country_list_tidy, envir = .GlobalEnv)
 
 # create function to tidy country test_treat datasets
 tidy_test_treat <- function(data) {
@@ -323,30 +326,29 @@ tidy_test_treat <- function(data) {
 }
 
 # apply tidy_test_treat function to all country treatment cascade datasets
-test_treat_cascade_country_list_tidy <- map(test_treat_cascade_country_list, tidy_test_treat)
-names(treat_cascade_country_list_tidy) <- map_chr(names(treat_cascade_country_list_tidy), paste0, "_tidy")
+test_treat_cascade_country_list_tidy <- map(list(test_treat_cascade_all, test_treat_cascade_f_adult, test_treat_cascade_m_adult), tidy_test_treat)
 
+# separate into individual data frames
+names(test_treat_cascade_country_list_tidy) <- map_chr(names(treat_cascade_country_list), paste0, "_tidy")
+list2env(test_treat_cascade_country_list_tidy, envir = .GlobalEnv)
 
-# join datasets to create full cascade datasets for country datasets
-full_cascade_all <- full_join(treat_cascade_all, 
-                              test_treat_cascade_all, 
-                              by = c("Country", "age", "sex"))
+# create union of datasets to create full cascade for country datasets
+full_cascade_all_tidy <- union(treat_cascade_all_tidy, 
+                          test_treat_cascade_all_tidy)
 
-full_cascade_m_adult <- full_join(treat_cascade_m_adult, 
-                                  test_treat_cascade_m_adult, 
-                                  by = c("Country", "age", "sex"))
+full_cascade_m_adult_tidy <- union(treat_cascade_m_adult_tidy, 
+                              test_treat_cascade_m_adult_tidy)
 
-full_cascade_f_adult <- full_join(treat_cascade_f_adult, 
-                                  test_treat_cascade_f_adult, 
-                                  by = c("Country", "age", "sex"))
+full_cascade_f_adult_tidy <- union(treat_cascade_f_adult_tidy, 
+                              test_treat_cascade_f_adult_tidy)
 
 # union country datasets to include sex and age data in a single dataset
+full_cascade_country_tidy <- union(full_cascade_all_tidy,
+                                   full_cascade_m_adult_tidy) %>%
+                             union(full_cascade_f_adult_tidy)
 
-full_cascade_country_tidy <- tidy_composite(full_cascade_country)
-
-full_cascade_country <- union(full_cascade_all,
-                                 full_cascade_m_adult) %>%
-                        union(full_cascade_f_adult)
+# save RDS object
+write_rds(full_cascade_country_tidy, "data/full_cascade_country_tidy")
 ```
 
 
@@ -411,8 +413,10 @@ know_status_all_global_tidy %>%
   scale_color_viridis_d()
 ```
 
-
-```{r}
- 
-```
+To Do:
+-rename metric_type to measure in functions
+-drop "estimate_" prefix from measure column
+-add some rm() functions to clean stray objects from the environment
+-check if single metric sets match filtered versions of composite datasets
+-create single metric datasets for missing measures by subsetting composite datasets
 
