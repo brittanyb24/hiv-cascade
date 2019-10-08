@@ -1,0 +1,82 @@
+---
+title: "HIV Treatment Cascade - Data Visualization"
+author: "Brittany Bowman"
+date: "10/8/2019"
+output: html_document
+runtime: shiny
+---
+
+This file provides a script for visualizing the HIV treatment cascade data from UNAIDS from 2015-2018 related to progress towards the 90-90-90 targets.
+```{r setup, include=FALSE echo = FALSE}
+# load necessary packages
+library(tidyverse)
+library(shiny)
+library(plotly)
+library(scales)
+library(ggthemes)
+
+# get working directory
+getwd()
+
+# load tidy datasets (g = global datasets, c = country datasets)
+full_cascade_g <- read_rds("data/tidy_data/full_cascade_global_tidy")
+full_cascade_c <- read_rds("data/tidy_data/full_cascade_country_tidy")
+
+know_status_g <- read_rds("data/tidy_data/know_status_all_global_tidy")
+know_status_c <- read_rds("data/tidy_data/know_status_all_country_tidy")
+
+on_art_g <- read_rds("data/tidy_data/on_art_all_global_tidy")
+on_art_c <- read_rds("data/tidy_data/on_art_all_country_tidy")
+
+vl_suppress_g <- read_rds("data/tidy_data/vl_suppress_all_global_tidy")
+vl_suppress_c <- read_rds("data/tidy_data/vl_suppress_all_country_tidy")
+```
+
+
+```{r}
+# create base plot
+```
+
+
+```{r}
+# plot data sets
+know_status_g %>% 
+  filter(Region != "Global") %>%
+  ggplot(aes(x = year, y = estimate, color = Region, group = Region)) + 
+  geom_point(alpha = 0.6) + 
+  geom_line(alpha = 0.6) + 
+  geom_point(data = filter(know_status_g, Region == "Global"), aes(x = year, y = estimate), color = "black", alpha = 0.7) +
+  geom_line(data = filter(know_status_g, Region == "Global"), aes(x = year, y = estimate), color = "black", alpha = 0.7) +
+  geom_hline(yintercept = 90, alpha = 0.2, linetype = 3) + 
+  scale_y_continuous(labels = percent_format(scale = 1), 
+                     breaks = pretty_breaks(n = 5), 
+                     expand = expansion(.2)) +
+  theme_tufte() +
+  scale_color_brewer(palette = "Set1") +
+  labs(x = NULL, y = NULL, 
+       title = "Percent of people living with HIV who know their status",
+       caption = "Source: UNAIDS special analysis, 2019")
+
+on_art_g %>% 
+  filter(Region != "Global") %>%
+  ggplot(aes(x = year, y = estimate, color = Region, group = Region)) + 
+  geom_point(alpha = 0.6) + 
+  geom_line(alpha = 0.6) + 
+  geom_point(data = filter(know_status_g, Region == "Global"), aes(x = year, y = estimate), color = "black", alpha = 0.7) +
+  geom_line(data = filter(know_status_g, Region == "Global"), aes(x = year, y = estimate), color = "black", alpha = 0.7) +
+  geom_hline(yintercept = 90, alpha = 0.2, linetype = 3) + 
+  scale_y_continuous(labels = percent_format(scale = 1), 
+                     breaks = pretty_breaks(n = 5), 
+                     expand = expansion(.2)) +
+  theme_tufte() +
+  scale_color_brewer(palette = "Set1") +
+  labs(x = NULL, y = NULL, 
+       title = "Percent of people living with HIV who know their status",
+       caption = "Source: UNAIDS special analysis, 2019")
+```
+
+
+```{r}
+
+```
+
