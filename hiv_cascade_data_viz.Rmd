@@ -137,3 +137,58 @@ full_cascade_g %>%
 ```
 
 
+```{r}
+# plot of progress towards 90-90-90 faceted by region
+full_cascade_g %>% 
+  filter(measure_type %in% c("know_status", "know_status_on_art", "on_art_vl_suppress"), 
+         age == "all", year == "2018") %>%
+  ggplot(aes(x = factor(measure_type, ordered = is.ordered(c("know_status", "know_status_on_art", "on_art_vl_suppress"))), 
+                        y = estimate, color = Region, group = rev(Region))) + 
+  geom_point() +
+  geom_linerange(aes(ymin = lower_ci, ymax = upper_ci)) +
+  geom_hline(yintercept = 90, alpha = 0.75, linetype = 3) + 
+  facet_wrap(~ Region, nrow = 3) +
+  scale_color_manual(values = custom_palette, guide = FALSE) +
+  scale_y_continuous(labels = percent_format(scale = 1),
+                     breaks = pretty_breaks(n = 10), 
+                     expand = expansion(add = 10)) +
+  scale_x_discrete(expand = expansion(add = 0.25),
+                   labels = c("People living with\n HIV who know\n their status",
+                              "People who know\n their status\n who are on ART",
+                              "People on ART\n who acheive\n viral suppression")) +
+  labs(x = NULL, y = NULL, 
+       title = "Progress towards 90-90-90 targets by region",
+       subtitle = "Figure based on modeled estimates from UNAIDS for all ages",
+       caption = "Source: UNAIDS special analysis, 2019") +
+  theme(axis.text.x = element_text(size = 8),
+        panel.spacing.x = unit(40, units = "pt"))
+```
+
+
+```{r}
+# plot of overall progress towards each goal as a percent of total people living with HIV
+full_cascade_g %>% 
+  filter(measure_type %in% c("know_status", "hiv_on_art", "hiv_vl_suppress"), 
+         age == "all", year == "2018") %>%
+  ggplot(aes(x = factor(measure_type, ordered = is.ordered(c("know_status", "hiv_on_art", "hiv_vl_suppress"))), 
+                        y = estimate, color = Region, group = rev(Region))) + 
+  geom_point() +
+  geom_linerange(aes(ymin = lower_ci, ymax = upper_ci)) +
+  facet_wrap(~ Region, nrow = 3) +
+  scale_color_manual(values = custom_palette, guide = FALSE) +
+  scale_y_continuous(labels = percent_format(scale = 1),
+                     breaks = pretty_breaks(n = 10), 
+                     expand = expansion(add = 10)) +
+  scale_x_discrete(expand = expansion(add = 0.25),
+                   labels = c("People living with HIV\n who know their status",
+                              "People living with HIV\n who are on ART",
+                              "People living with HIV\n who acheive viral suppression")) +
+  labs(x = NULL, y = NULL, 
+       title = "Percent of all people living with HIV reaching each target by region",
+       subtitle = "Figure based on modeled estimates from UNAIDS for all ages",
+       caption = "Source: UNAIDS special analysis, 2019") +
+  theme(axis.text.x = element_text(size = 8),
+        panel.spacing.x = unit(40, units = "pt"))
+```
+
+
