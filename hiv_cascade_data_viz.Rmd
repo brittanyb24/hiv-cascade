@@ -192,3 +192,63 @@ full_cascade_g %>%
 ```
 
 
+```{r}
+# plot of people living with HIV who know their status ordered by region for 2018
+full_cascade_g %>% 
+  filter(measure_type == "know_status", age == "all", year == "2018") %>%
+  ggplot(aes(x = reorder(Region, estimate), y = estimate, group = rev(Region),
+             color = Region == "Global")) + 
+  geom_point() +
+  geom_linerange(aes(ymin = lower_ci, ymax = upper_ci)) +
+  geom_hline(yintercept = 90, alpha = 0.75, linetype = 3) +
+  scale_color_manual(values = c("black", "firebrick3"), guide = FALSE) +
+  scale_y_continuous(labels = percent_format(scale = 1),
+                     breaks = pretty_breaks(n = 10), 
+                     expand = expansion(add = 10)) +
+  coord_flip() +
+  labs(x = NULL, y = NULL, 
+       title = "Percent of people living with HIV who know their status by region, 2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS for all ages",
+       caption = "Source: UNAIDS special analysis, 2019") +
+  theme(axis.text.x = element_text(size = 8),
+        panel.spacing.x = unit(40, units = "pt")) +
+    annotate("text", x = 9.5, y = 70, 
+           label = "paste(bold(\"UNAIDS target:\"), \" 90% of people living with HIV know their status by 2020\")", 
+           parse = TRUE, size = 3.2, color = "grey20") +
+  annotate("curve", x = 9.5, xend = 9.3, y = 87.2, yend = 89.5, 
+           curvature = -0.4, angle = 90,
+           arrow = arrow(length = unit(0.01, "npc")),
+           color = "grey20")
+```
+
+
+```{r}
+# plot of people who know their status who are on ART ordered by region for 2018
+full_cascade_g %>% 
+  filter(measure_type == "know_status_on_art", age == "all", year == "2018") %>%
+  ggplot(aes(x = reorder(Region, estimate), y = estimate, group = rev(Region),
+             color = Region == "Global")) + 
+  geom_point() +
+  geom_linerange(aes(ymin = lower_ci, ymax = upper_ci)) +
+  geom_hline(yintercept = 90, alpha = 0.75, linetype = 3) +
+  scale_color_manual(values = c("black", "firebrick3"), guide = FALSE) +
+  scale_y_continuous(labels = percent_format(scale = 1),
+                     breaks = pretty_breaks(n = 10), 
+                     expand = expansion(add = 10)) +
+  coord_flip() +
+  labs(x = NULL, y = NULL, 
+       title = "Percent of people who know their HIV-positive status who are on ART by region, 2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS for all ages",
+       caption = "Source: UNAIDS special analysis, 2019") +
+  theme(axis.text.x = element_text(size = 8),
+        panel.spacing.x = unit(40, units = "pt")) +
+    annotate("text", x = 9.5, y = 70, 
+           label = "paste(bold(\"UNAIDS target:\"), \" 90% of people who know their HIV-positive status access treatment by 2020\")", 
+           parse = TRUE, size = 3.2, color = "grey20") +
+  annotate("curve", x = 9.5, xend = 9.3, y = 87.2, yend = 89.5, 
+           curvature = -0.4, angle = 90,
+           arrow = arrow(length = unit(0.01, "npc")),
+           color = "grey20")
+```
+
+
