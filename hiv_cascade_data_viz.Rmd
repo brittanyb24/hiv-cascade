@@ -58,7 +58,7 @@ theme_set(custom_theme)
 
 
 ```{r}
-# plot percent of people living with HIV who know their status
+# plot of percent of people living with HIV who know their status
 know_status_g %>% 
   ggplot(aes(x = year, y = estimate, color = Region, group = rev(Region))) + 
   geom_point(alpha = 0.75) + 
@@ -84,6 +84,7 @@ know_status_g %>%
 
 
 ```{r}
+# plot of percent of people who know their HIV-positive status who are accessing treatment
 full_cascade_g %>% 
   filter(measure_type == "know_status_on_art", age == "all") %>%
   ggplot(aes(x = year, y = estimate, color = Region, group = rev(Region))) + 
@@ -96,7 +97,7 @@ full_cascade_g %>%
                      expand = expansion(add = 8)) +
   scale_x_discrete(expand = expansion(add = 0.1)) +
   labs(x = NULL, y = NULL, 
-       title = "Percent of people who know their HIV-positive status who are accessing treatment by region",
+       title = "Percent of people who know their HIV-positive status who are on ART by region",
        subtitle = "Figure based on modeled estimates from UNAIDS for all ages",
        caption = "Source: UNAIDS special analysis, 2019") +
   annotate("text", x = 3.1, y = 92, 
@@ -106,6 +107,33 @@ full_cascade_g %>%
            curvature = -0.9, angle = 90,
            arrow = arrow(length = unit(0.01, "npc")),
            color = "grey20")
-
 ```
+
+
+```{r}
+# plot of percent of people on ART who achieve viral suppression
+full_cascade_g %>% 
+  filter(measure_type == "on_art_vl_suppress", age == "all") %>%
+  ggplot(aes(x = year, y = estimate, color = Region, group = rev(Region))) + 
+  geom_point(alpha = 0.75) + 
+  geom_line(alpha = 0.75) +
+  geom_hline(yintercept = 90, alpha = 0.75, linetype = 3) + 
+  scale_color_manual(values = custom_palette) +
+  scale_y_continuous(labels = percent_format(scale = 1),
+                     breaks = pretty_breaks(n = 10), 
+                     expand = expansion(add = 8)) +
+  scale_x_discrete(expand = expansion(add = 0.1)) +
+  labs(x = NULL, y = NULL, 
+       title = "Percent of people on ART who achieve viral suppression by region",
+       subtitle = "Figure based on modeled estimates from UNAIDS for all ages",
+       caption = "Source: UNAIDS special analysis, 2019") +
+  annotate("text", x = 3.2, y = 92, 
+           label = "paste(bold(\"UNAIDS target:\"), \" 90% of people on treatment have suppressed viral loads by 2020\")", 
+           parse = TRUE, size = 3.2, color = "grey20") +
+  annotate("curve", x = 4, xend = 4.05, y = 92, yend = 90.3, 
+           curvature = -0.9, angle = 90,
+           arrow = arrow(length = unit(0.01, "npc")),
+           color = "grey20")
+```
+
 
