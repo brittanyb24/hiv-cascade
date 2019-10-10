@@ -212,7 +212,7 @@ full_cascade_g %>%
        caption = "Source: UNAIDS special analysis, 2019") +
   theme(axis.text.x = element_text(size = 8),
         panel.spacing.x = unit(40, units = "pt")) +
-    annotate("text", x = 9.5, y = 70, 
+  annotate("text", x = 9.5, y = 70, 
            label = "paste(bold(\"UNAIDS target:\"), \" 90% of people living with HIV know their status by 2020\")", 
            parse = TRUE, size = 3.2, color = "grey20") +
   annotate("curve", x = 9.5, xend = 9.3, y = 87.2, yend = 89.5, 
@@ -242,7 +242,7 @@ full_cascade_g %>%
        caption = "Source: UNAIDS special analysis, 2019") +
   theme(axis.text.x = element_text(size = 8),
         panel.spacing.x = unit(40, units = "pt")) +
-    annotate("text", x = 9.5, y = 70, 
+  annotate("text", x = 9.5, y = 70, 
            label = "paste(bold(\"UNAIDS target:\"), \" 90% of people who know their HIV-positive status access treatment by 2020\")", 
            parse = TRUE, size = 3.2, color = "grey20") +
   annotate("curve", x = 9.5, xend = 9.3, y = 87.2, yend = 89.5, 
@@ -272,7 +272,7 @@ full_cascade_g %>%
        caption = "Source: UNAIDS special analysis, 2019") +
   theme(axis.text.x = element_text(size = 8),
         panel.spacing.x = unit(40, units = "pt")) +
-    annotate("text", x = 9.5, y = 72, 
+  annotate("text", x = 9.5, y = 72, 
            label = "paste(bold(\"UNAIDS target:\"), \" 90% of people on treatment have suppressed viral loads by 2020\")", 
            parse = TRUE, size = 3.2, color = "grey20") +
   annotate("curve", x = 9.5, xend = 9.3, y = 87.2, yend = 89.5, 
@@ -284,32 +284,40 @@ full_cascade_g %>%
 ```{r}
 # plot of people living with HIV who know their status ordered by country for 2018
 
-# full_cascade_c %>% 
+# full_cascade_c %>%
 #   filter(measure_type == "know_status", age == "all", year == "2018") %>%
 #   filter(!is.na(estimate)) %>%
 #   ggplot(aes(x = reorder(Country, estimate), y = estimate, group = rev(Country),
-#              color = Country == "Global")) + 
+#              color = Country == "Global")) +
 #   geom_point() +
 #   geom_linerange(aes(ymin = lower_ci, ymax = upper_ci)) +
 #   geom_hline(yintercept = 90, alpha = 0.75, linetype = 3) +
 #   scale_color_manual(values = c("black", "firebrick3"), guide = FALSE) +
 #   scale_y_continuous(labels = percent_format(scale = 1),
-#                      breaks = pretty_breaks(n = 10), 
-#                      expand = expansion(add = 10)) +
+#                      breaks = pretty_breaks(n = 10),
+#                      expand = expansion(add = 5)) +
+#   scale_x_discrete(expand = expansion(add = 1)) +
 #   coord_flip() +
-#   labs(x = NULL, y = NULL, 
+#   labs(x = NULL, y = NULL,
 #        title = "Percent of people living with HIV who know their status, ordered by region, 2018",
 #        subtitle = "Figure based on modeled estimates from UNAIDS for all ages. Countries with missing data have been removed.",
 #        caption = "Source: UNAIDS special analysis, 2019") +
 #   theme(axis.text = element_text(size = 8),
-#         panel.spacing.x = unit(40, units = "pt")) +
-#     annotate("text", x = 9.5, y = 70, 
-#            label = "paste(bold(\"UNAIDS target:\"), \" 90% of people living with HIV know their status by 2020\")", 
+#         panel.spacing.x = unit(40, units = "pt"),
+#         axis.ticks) +
+#   annotate("text", x = 5, y = 70,
+#            label = "paste(bold(\"UNAIDS target:\"), \" 90% of people living with HIV know their status by 2020\")",
 #            parse = TRUE, size = 3.2, color = "grey20") +
-#   annotate("curve", x = 9.5, xend = 9.3, y = 87.2, yend = 89.5, 
+#   annotate("curve", x = 5, xend = 4.8, y = 87.2, yend = 89.5,
 #            curvature = -0.4, angle = 90,
 #            arrow = arrow(length = unit(0.01, "npc")),
 #            color = "grey20")
 ```
+
+
+```{r}
+
+```
+
 
 
