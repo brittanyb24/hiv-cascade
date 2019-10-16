@@ -16,6 +16,8 @@ library(scales)
 library(ggthemes)
 library(RColorBrewer)
 library(grDevices)
+library(choroplethr)
+library(plotlyGeoAssets)
 
 # get working directory
 getwd()
@@ -38,6 +40,7 @@ vl_suppress_c <- read_rds("data/tidy_data/vl_suppress_all_country_tidy")
 ```{r}
 # define color palette (RBrewerPal palette Set1 with black inserted for global)
 custom_palette <- c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#000000", "#FF7F00", "#FFFF33", "#A65628", "#F781BF")
+diverge_palette <- c("#35B779FF", "#31688EFF", "#440154FF")
 
 # define custom theme
 custom_theme <- theme_tufte() +
@@ -314,9 +317,126 @@ full_cascade_g %>%
 #            color = "grey20")
 ```
 
-
+Prepare data for making choropleth maps.
 ```{r}
+# manipulate country plot to calculate difference between men and women
+mf_plot_data_c <- full_cascade_c %>%
+  select(-lower_ci, -upper_ci) %>%
+  spread(sex, estimate) %>%
+  filter(age == "adult") %>%
+  select(-all) %>%
+  mutate(diff_f_m = female - male,
+         diff_valence = as.factor(ifelse(diff_f_m < 0,-1,
+                                  ifelse(diff_f_m == 0, 0, 1)))) %>%
+  filter(!is.na(diff_f_m))
 
+# unique country names in UNAIDS data
+countries_unaids <- unique(full_cascade_c$Country)
+
+# unique countries in plotly-compatible dataset
+world_plotly <- ne_countries(returnclass = "sf")
+countries_plotly <- world_plotly$name
+
+# find set difference between UNAIDS and plotly-compatible data
+unaids_not_plotly <- setdiff(countries_unaids, countries_plotly)
+plotly_not_unaids <- setdiff(countries_plotly, countries_unaids)
+unaids_not_plotly
+plotly_not_unaids
+
+# recode country names to make mf_plot_data_c compatible with plotly mapping functions
+mf_plot_data_c <- mf_plot_data_c %>%
+  mutate(name = Country,
+         name = recode(name,
+                         "Bosnia and Herzegovina" = "Bosnia and Herz.",
+                         "Bolivia (Plurinational State of)" = "Bolivia",
+                         "Brunei Darussalam"  = "Brunei",
+                         "Central African Republic" = "Central African Rep.",
+                         "Democratic Republic of the Congo" = "Dem. Rep. Congo",
+                         "Czechia" = "Czech Rep.",
+                         "Dominican Republic" = "Dominican Rep.",
+                         "Equatorial Guinea" = "Eq. Guinea", 
+                         "Iran (Islamic Republic of)" = "Iran",
+                         "Republic of Korea" = "Korea",
+                         "Lao People's Democratic Republic" = "Lao PDR",
+                         "Republic of Moldova" = "Moldova",
+                         "North Macedonia" = "Macedonia",
+                         "Democratic People's Republic of Korea" = "Dem. Rep. Korea",
+                         "Russian Federation" = "Russia", 
+                         "South Sudan" = "S. Sudan",
+                         "Solomon Islands" = "Solomon Is.",
+                         "Eswatini" = "Swaziland",
+                         "Syrian Arab Republic"  = "Syria",
+                         "United Republic of Tanzania" = "Tanzania",
+                         "Venezuela (Bolivarian Republic of)" = "Venezuela",
+                         "Viet Nam" = "Vietnam")) %>%
+  right_join(select(world_plotly, name, adm0_a3), by = "name") %>%
+  rename(code = adm0_a3)
+
+
+# light grey boundaries
+l <- list(color = toRGB("grey"), width = 0.5)
+
+# specify map projection/options
+g <- list(
+  showframe = FALSE,
+  showcoastlines = FALSE,
+  landcolor = 'white',
+  showland = TRUE,
+  showcountries = TRUE,
+  countrycolor = 'grey',
+  countrywidth = 0.5,
+  projection = list(type = 'Mercator')
+  )
+
+
+p <- mf_plot_data_c %>%
+  filter(year == "2018", measure_type == "know_status") %>%
+  plot_geo(offline = TRUE) %>%
+  add_trace(
+    type = "choropleth", 
+    z = ~diff_f_m, color = ~diff_f_m, colors = "PuOr",
+    text = ~Country, locations = ~code, marker = list(line = l)
+  ) %>%
+  layout(
+    geo = g
+  )
+
+
+
+ggplot(aes(x = reorder(Country, diff_f_m), y = diff_f_m, color = diff_valence)) +
+  geom_point() +
+  geom_hline(yintercept = 0, alpha = 0.75, linetype = 3) +
+  scale_color_manual(values = viridis(n = 3, direction = 1, option = "C"), guide = FALSE) +
+  scale_x_discrete(expand = expansion(add = 1)) +
+  coord_flip()
+
+full_cascade_g %>%
+  select(-lower_ci, -upper_ci) %>%
+  spread(sex, estimate) %>%
+  filter(age == "adult") %>%
+  select(-all) %>%
+  mutate(diff_f_m = female - male) %>%
+  filter(year == "2018", measure_type == "know_status_on_art") %>%
+  ggplot(aes(x = reorder(Region, diff_f_m), y = diff_f_m)) +
+  geom_point() +
+  geom_hline(yintercept = 0, alpha = 0.75, linetype = 3) +
+  scale_y_continuous(labels = percent_format(scale = 1)) +
+  scale_x_discrete(expand = expansion(add = 1)) +
+  coord_flip()
+
+full_cascade_g %>%
+  select(-lower_ci, -upper_ci) %>%
+  spread(sex, estimate) %>%
+  filter(age == "adult") %>%
+  select(-all) %>%
+  mutate(diff_f_m = female - male) %>%
+  filter(year == "2018", measure_type == "on_art_vl_suppress") %>%
+  ggplot(aes(x = reorder(Region, diff_f_m), y = diff_f_m)) +
+  geom_point() +
+  geom_hline(yintercept = 0, alpha = 0.75, linetype = 3) +
+  scale_y_continuous(labels = percent_format(scale = 1)) +
+  scale_x_discrete(expand = expansion(add = 1)) +
+  coord_flip()
 ```
 
 
