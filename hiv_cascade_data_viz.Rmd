@@ -16,7 +16,6 @@ library(scales)
 library(ggthemes)
 library(RColorBrewer)
 library(grDevices)
-library(choroplethr)
 library(plotlyGeoAssets)
 
 # get working directory
@@ -34,6 +33,11 @@ on_art_c <- read_rds("data/tidy_data/on_art_all_country_tidy")
 
 vl_suppress_g <- read_rds("data/tidy_data/vl_suppress_all_global_tidy")
 vl_suppress_c <- read_rds("data/tidy_data/vl_suppress_all_country_tidy")
+
+hiv_ep_g <- read_rds("data/tidy_data/tidy_hiv_ep_g")
+hiv_ep_c <- read_rds("data/tidy_data/tidy_hiv_ep_c")
+hiv_tx_g <- read_rds("data/tidy_data/tidy_hiv_tx_g")
+hiv_tx_g <- read_rds("data/tidy_data/tidy_hiv_tx_c")
 ```
 
 
@@ -371,9 +375,12 @@ mf_plot_data_c <- mf_plot_data_c %>%
                          "Viet Nam" = "Vietnam")) %>%
   right_join(select(world_plotly, name, adm0_a3), by = "name") %>%
   rename(code = adm0_a3)
+```
 
 
-# light grey boundaries
+Make interactive choropleth maps for each metric
+```{r}
+# specify light grey boundaries
 l <- list(color = toRGB("grey"), width = 0.5)
 
 # specify map projection/options
@@ -388,8 +395,8 @@ g <- list(
   projection = list(type = 'Mercator')
   )
 
-
-p <- mf_plot_data_c %>%
+# plot choropleth of difference between percent of women and men who know their HIV status 
+mf_plot_data_c %>%
   filter(year == "2018", measure_type == "know_status") %>%
   plot_geo(offline = TRUE) %>%
   add_trace(
@@ -400,9 +407,10 @@ p <- mf_plot_data_c %>%
   layout(
     geo = g
   )
+```
 
 
-
+```{r}
 ggplot(aes(x = reorder(Country, diff_f_m), y = diff_f_m, color = diff_valence)) +
   geom_point() +
   geom_hline(yintercept = 0, alpha = 0.75, linetype = 3) +
@@ -438,6 +446,4 @@ full_cascade_g %>%
   scale_x_discrete(expand = expansion(add = 1)) +
   coord_flip()
 ```
-
-
 

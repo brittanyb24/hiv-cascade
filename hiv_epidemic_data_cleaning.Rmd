@@ -462,4 +462,12 @@ glimpse(tidy_hiv_tx_c)
 ```
 
 
+```{r}
+#save RDS objects
+write_rds(tidy_hiv_ep_g, "data/tidy_data/tidy_hiv_ep_g")
+write_rds(tidy_hiv_ep_c, "data/tidy_data/tidy_hiv_ep_c")
+write_rds(tidy_hiv_tx_g, "data/tidy_data/tidy_hiv_tx_g")
+write_rds(tidy_hiv_tx_c, "data/tidy_data/tidy_hiv_tx_c")
+```
+
 
