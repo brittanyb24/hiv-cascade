@@ -17,6 +17,8 @@ library(ggthemes)
 library(RColorBrewer)
 library(grDevices)
 library(plotlyGeoAssets)
+library(rnaturalearth)
+library(maptools)
 
 # get working directory
 getwd()
@@ -337,9 +339,21 @@ mf_plot_data_c <- full_cascade_c %>%
 # unique country names in UNAIDS data
 countries_unaids <- unique(full_cascade_c$Country)
 
+# import world map data
+world_plotly <- data.frame(wrld_simpl, typ) %>%
+  select(ISO3, NAME, LON, LAT)
+head(world_plotly)
+
+# update world map data to include South Sudan
+sudan_data <- ne_countries() %>%
+  data.frame() %>% 
+  filter(name == "S. Sudan" | name == "Sudan") %>%
+  select(ISO3 = adm0_a3,
+         NAME = admin,
+         )
+
 # unique countries in plotly-compatible dataset
-world_plotly <- ne_countries(returnclass = "sf")
-countries_plotly <- world_plotly$name
+countries_plotly <- world_plotly$NAME
 
 # find set difference between UNAIDS and plotly-compatible data
 unaids_not_plotly <- setdiff(countries_unaids, countries_plotly)
@@ -351,28 +365,19 @@ plotly_not_unaids
 mf_plot_data_c <- mf_plot_data_c %>%
   mutate(name = Country,
          name = recode(name,
-                         "Bosnia and Herzegovina" = "Bosnia and Herz.",
                          "Bolivia (Plurinational State of)" = "Bolivia",
-                         "Brunei Darussalam"  = "Brunei",
-                         "Central African Republic" = "Central African Rep.",
-                         "Democratic Republic of the Congo" = "Dem. Rep. Congo",
+                         "Cabo Verde"  = "Cape Verde",
+                         "Côte d'Ivoire" = "Cote d'Ivoire",
                          "Czechia" = "Czech Rep.",
-                         "Dominican Republic" = "Dominican Rep.",
-                         "Equatorial Guinea" = "Eq. Guinea", 
-                         "Iran (Islamic Republic of)" = "Iran",
-                         "Republic of Korea" = "Korea",
-                         "Lao People's Democratic Republic" = "Lao PDR",
-                         "Republic of Moldova" = "Moldova",
-                         "North Macedonia" = "Macedonia",
-                         "Democratic People's Republic of Korea" = "Dem. Rep. Korea",
+                         "Democratic People's Republic of Korea" = "Korea, Democratic People's Republic of",
+                         "Eswatini" = "Swaziland",
+                         "Libya" = "Libyan Arab Jamahiriya",
+                         "Myanmar" = "Burma",
+                         "North Macedonia" = "The former Yugoslav Republic of Macedonia",
+                         "Republic of Korea" = "Korea, Republic of",
                          "Russian Federation" = "Russia", 
                          "South Sudan" = "S. Sudan",
-                         "Solomon Islands" = "Solomon Is.",
-                         "Eswatini" = "Swaziland",
-                         "Syrian Arab Republic"  = "Syria",
-                         "United Republic of Tanzania" = "Tanzania",
-                         "Venezuela (Bolivarian Republic of)" = "Venezuela",
-                         "Viet Nam" = "Vietnam")) %>%
+                         "Venezuela (Bolivarian Republic of)" = "Venezuela") %>%
   right_join(select(world_plotly, name, adm0_a3), by = "name") %>%
   rename(code = adm0_a3)
 ```
@@ -381,16 +386,16 @@ mf_plot_data_c <- mf_plot_data_c %>%
 Make interactive choropleth maps for each metric
 ```{r}
 # specify light grey boundaries
-l <- list(color = toRGB("grey"), width = 0.5)
+l <- list(color = toRGB("grey20"), width = 0.5)
 
 # specify map projection/options
 g <- list(
   showframe = FALSE,
   showcoastlines = FALSE,
-  landcolor = 'white',
+  landcolor = toRGB("white"),
   showland = TRUE,
   showcountries = TRUE,
-  countrycolor = 'grey',
+  countrycolor = toRGB("grey70"),
   countrywidth = 0.5,
   projection = list(type = 'Mercator')
   )
@@ -407,6 +412,9 @@ mf_plot_data_c %>%
   layout(
     geo = g
   )
+
+# fix morocco boundary
+# 
 ```
 
 
