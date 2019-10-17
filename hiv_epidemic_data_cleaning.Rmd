@@ -6,7 +6,7 @@ output: html_document
 runtime: shiny
 ---
 
-This file provides a script for cleaning the HIV 2019 and historical data from UNAIDS related to status of thie HIV epidemic and progress towards ending HIV.
+This file provides a script for cleaning the HIV 2019 and historical data from UNAIDS related to status of the HIV epidemic, access to treatment, and progress towards ending HIV.
 
 ```{r setup, include=FALSE echo = FALSE}
 # load necessary packages
@@ -16,23 +16,27 @@ library(readxl)
 # get working directory
 getwd()
 
-# import longitudinal epidemic data
+# import longitudinal epidemic data and longitudinal treatment data
 hiv_ep <- read_excel("data/HIV_estimates_from_1990-to-present.xlsx", sheet = 1, skip = 5, na = c("", "NA", "..."))
+hiv_tx <- read_excel("data/HIV_estimates_from_1990-to-present.xlsx", sheet = 3, skip = 5, na = c("", "NA", "..."))
 ```
 
 
 ```{r}
-# explore dataset
+# explore datasets
 glimpse(hiv_ep)
 head(hiv_ep)
+
+glimpse(hiv_tx)
+head(hiv_tx)
 ```
 
-Create subsets of the dataset.
+Create subsets of the longitudinal epidemic dataset.
 
 ```{r}
 # find column names
-column_names <- colnames(hiv_ep)
-column_names
+column_names_ep <- colnames(hiv_ep)
+column_names_ep
 
 # select adult HIV prevalence columns
 hiv_prev_adult <- hiv_ep %>% 
@@ -259,7 +263,7 @@ hiv_new_infections_total <- hiv_ep %>%
   select(code, region, year, measure_type, estimate, lower_ci, upper_ci, age_group, sex)
 ```
 
-Bind subsets into reformatted master dataset and tidy.
+Bind longitudinal epidemic subsets into reformatted master dataset and tidy.
 
 ```{r}
 # bind datasets together
@@ -306,8 +310,156 @@ tidy_hiv_ep_g <- tidy_hiv_ep %>%
 tidy_hiv_ep_c <- tidy_hiv_ep %>%
   filter(!is.na(code)) %>%
   rename(country = region)
+
+glimpse(tidy_hiv_ep_g)
+glimpse(tidy_hiv_ep_c)
 ```
 
+
+Create subsets of the longitudinal treatment dataset.
+
+```{r}
+# find column names
+column_names_tx <- colnames(hiv_tx)
+column_names_tx
+
+# select percent of all people living with HIV on ART
+hiv_on_art_total <- hiv_tx %>% 
+  select(year = "...1",
+         code = "...2",
+         region = "...3",
+         estimate = "Percent of People all ages living with HIV receiving ART",
+         lower_ci = "Percent of People all ages living with HIV receiving ART - Lower",
+         upper_ci = "Percent of People all ages living with HIV receiving ART - Upper"
+         ) %>%
+  mutate(age_group = "All",
+         sex = "all",
+         measure_type = "hiv_on_art") %>%
+  select(code, region, year, measure_type, estimate, lower_ci, upper_ci, age_group, sex) %>%
+  mutate_all(as.character)
+
+# select percent of children living with HIV on ART
+hiv_on_art_children <- hiv_tx %>% 
+  select(year = "...1",
+         code = "...2",
+         region = "...3",
+         estimate = "Percent of children(0-14) living with HIV receiving ART",
+         lower_ci = "Percent of children(0-14) living with HIV receiving ART - Lower",
+         upper_ci = "Percent of children(0-14) living with HIV receiving ART - Upper"
+         ) %>%
+  mutate(age_group = "Child (0-14)",
+         sex = "all",
+         measure_type = "hiv_on_art") %>%
+  select(code, region, year, measure_type, estimate, lower_ci, upper_ci, age_group, sex) %>%
+  mutate_all(as.character)
+
+# select percent of adults living with HIV on ART
+hiv_on_art_adult <- hiv_tx %>% 
+  select(year = "...1",
+         code = "...2",
+         region = "...3",
+         estimate = "Percent of adults(15+) living with HIV receiving ART",
+         lower_ci = "Percent of adults(15+) living with HIV receiving ART - Lower",
+         upper_ci = "Percent of adults(15+) living with HIV receiving ART - Upper"
+         ) %>%
+  mutate(age_group = "Adult (15+)",
+         sex = "all",
+         measure_type = "hiv_on_art") %>%
+  select(code, region, year, measure_type, estimate, lower_ci, upper_ci, age_group, sex) %>%
+  mutate_all(as.character)
+
+# select PMTCT coverage of effective regimen
+pmtct_coverage <- hiv_tx %>% 
+  select(year = "...1",
+         code = "...2",
+         region = "...3",
+         estimate = "PMTCT coverage of effective regimen",
+         lower_ci = "PMTCT coverage of effective regimen - Lower",
+         upper_ci = "PMTCT coverage of effective regimen - Upper"
+         ) %>%
+  mutate(age_group = "Pregnant",
+         sex = "female",
+         measure_type = "pmtct_coverage") %>%
+  select(code, region, year, measure_type, estimate, lower_ci, upper_ci, age_group, sex) %>%
+  mutate_all(as.character)
+
+# gather remaining measure of number of people receiving tx
+number_tx <- hiv_tx %>% 
+  select(year = "...1",
+         code = "...2",
+         region = "...3",
+         "Number of peple all ages receiving ART",
+         "Number of children (0-14) receiving ART",
+         "Number of adults (15+) receiving ART",
+         "Number of mothers receiving effective pmtct regimen" 
+         ) %>%
+  gather(key = "measure_type", value = "estimate", -c("year", "code", "region")) %>%
+  mutate(age_group = case_when(.$measure_type == "Number of peple all ages receiving ART" ~ "All",
+                               .$measure_type == "Number of children (0-14) receiving ART" ~ "Child (0-14)",
+                               .$measure_type == "Number of adults (15+) receiving ART" ~ "Adult (15+)",
+                               .$measure_type == "Number of mothers receiving effective pmtct regimen" ~ "Pregnant"),
+         sex = case_when(.$measure_type == "Number of peple all ages receiving ART" ~ "all",
+                         .$measure_type == "Number of children (0-14) receiving ART" ~ "all",
+                         .$measure_type == "Number of adults (15+) receiving ART" ~ "all",
+                         .$measure_type == "Number of mothers receiving effective pmtct regimen" ~ "female"),
+         measure_type = case_when(.$measure_type == "Number of peple all ages receiving ART" ~ "number_on_art",
+                                  .$measure_type == "Number of children (0-14) receiving ART" ~ "number_on_art",
+                                  .$measure_type == "Number of adults (15+) receiving ART" ~ "number_on_art",
+                                  .$measure_type == "Number of mothers receiving effective pmtct regimen" ~ "number_on_pmtct"),
+         lower_ci = NA,
+         upper_ci = NA) %>%
+  select(code, region, year, measure_type, estimate, lower_ci, upper_ci, age_group, sex) %>%
+  mutate_all(as.character)
+```
+
+
+Bind longitudinal treatment subsets into reformatted master dataset and tidy.
+
+```{r}
+# bind datasets together
+tidy_hiv_tx <- bind_rows(hiv_on_art_total, hiv_on_art_children, hiv_on_art_adult, pmtct_coverage, number_tx)
+glimpse(tidy_hiv_tx)
+
+# remove any "<" or ">" characters (just set to value)
+tidy_hiv_tx <- tidy_hiv_tx %>%
+  map(str_replace_all, "<", "") %>%
+  map(str_replace_all, ">", "") %>%
+  as_tibble()
+
+# remove any spaces from estimate, lower_ci, and upper_ci columns so they can be converted to numbers
+tidy_hiv_tx <- tidy_hiv_tx %>%
+  mutate(estimate = str_replace_all(estimate," ", "")) %>%
+  mutate(lower_ci = str_replace_all(lower_ci," ", "")) %>%
+  mutate(upper_ci = str_replace_all(upper_ci," ", "")) %>%
+  as_tibble()
+
+# trim white space from region column
+tidy_hiv_tx <- tidy_hiv_tx %>%
+  mutate(region = str_trim(region, side = "both")) %>%
+  mutate(region = str_remove_all(region, pattern = "   ")) %>%
+  as_tibble()
+
+# convert column types
+tidy_hiv_tx <- tidy_hiv_tx %>%
+  mutate(year = factor(year),
+         estimate = as.numeric(estimate),
+         lower_ci = as.numeric(lower_ci),
+         upper_ci = as.numeric(upper_ci))
+
+glimpse(tidy_hiv_tx)
+
+# split into global/regional dataset and country dataset
+tidy_hiv_tx_g <- tidy_hiv_tx %>%
+  filter(is.na(code)) %>%
+  select(-code)
+
+tidy_hiv_tx_c <- tidy_hiv_tx %>%
+  filter(!is.na(code)) %>%
+  rename(country = region)
+
+glimpse(tidy_hiv_tx_g)
+glimpse(tidy_hiv_tx_c)
+```
 
 
 
