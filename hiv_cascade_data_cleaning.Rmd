@@ -229,7 +229,7 @@ tidy_composite <- function(data) {
 
 # tidy global composite data sets
 full_cascade_global_tidy <- tidy_composite(full_cascade_global)
-write_rds(full_cascade_global_tidy, "data/full_cascade_global_tidy")
+write_rds(full_cascade_global_tidy, "data/tidy_data/full_cascade_global_tidy")
 ```
 
 
@@ -356,7 +356,7 @@ full_cascade_country_tidy <- union(full_cascade_all_tidy,
                              union(full_cascade_f_adult_tidy)
 
 # save RDS object
-write_rds(full_cascade_country_tidy, "data/full_cascade_country_tidy")
+write_rds(full_cascade_country_tidy, "data/tidy_data/full_cascade_country_tidy")
 ```
 
 
@@ -403,22 +403,15 @@ names(single_data_list_tidy) <- map_chr(single_list_names, paste0, "_tidy")
 
 # split lists into individual tidy data frames
 list2env(single_data_list_tidy, envir = .GlobalEnv)
-```
 
+# save RDS objects
+write_rds(know_status_all_global_tidy, "data/tidy_data/know_status_all_global_tidy")
+write_rds(on_art_all_global_tidy, "data/tidy_data/on_art_all_global_tidy")
+write_rds(vl_suppress_all_global_tidy, "data/tidy_data/vl_suppress_all_global_tidy")
+write_rds(know_status_all_tidy, "data/tidy_data/know_status_all_country_tidy")
+write_rds(on_art_all_tidy, "data/tidy_data/on_art_all_country_tidy")
+write_rds(vl_suppress_all_tidy, "data/tidy_data/vl_suppress_all_country_tidy")
 
-```{r}
-# plot data sets
-know_status_all_global_tidy %>% 
-  ggplot(aes(x = year, y = estimate, color = Region, group = Region)) + 
-  geom_point() + 
-  geom_line() + 
-  geom_hline(yintercept = 90, alpha = 0.2) + 
-  scale_y_continuous(labels = percent_format(scale = 1), 
-                     breaks = pretty_breaks(n = 5), 
-                     expand = expansion(.2)) +
-  theme(panel.grid = element_blank(),
-        panel.background = element_blank()) +
-  scale_color_brewer(palette = "Accent")
 ```
 
 To Do:
