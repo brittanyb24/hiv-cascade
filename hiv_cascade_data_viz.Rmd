@@ -41,7 +41,9 @@ vl_suppress_c <- read_rds("data/tidy_data/vl_suppress_all_country_tidy")
 hiv_ep_g <- read_rds("data/tidy_data/tidy_hiv_ep_g")
 hiv_ep_c <- read_rds("data/tidy_data/tidy_hiv_ep_c")
 hiv_tx_g <- read_rds("data/tidy_data/tidy_hiv_tx_g")
-hiv_tx_g <- read_rds("data/tidy_data/tidy_hiv_tx_c")
+hiv_tx_c <- read_rds("data/tidy_data/tidy_hiv_tx_c")
+
+setwd("plots/")
 ```
 
 
@@ -53,9 +55,9 @@ diverge_palette <- c("#35B779FF", "#31688EFF", "#440154FF")
 # define custom theme
 custom_theme <- theme_tufte() +
                 theme(text = element_text(family = "Helvetica"),
-                      plot.title = element_text(face = "bold", size = 16, color = "grey20"),
+                      plot.title = element_text(face = "bold", size = 14, color = "black"),
                       plot.title.position = "plot",
-                      plot.subtitle = element_text(margin = margin(b = 16)),
+                      plot.subtitle = element_text(margin = margin(b = 16), size = 10),
                       plot.caption = element_text(hjust = 0, margin = margin(t = 10)),
                       plot.caption.position = "plot",
                       axis.line.x = element_line(colour = "grey20", size = 0.25, linetype = "solid"), 
@@ -486,7 +488,274 @@ full_cascade_g %>%
 
 
 ```{r}
-# plots of epidemic transition 1990 to 2018
+# plots of epidemic transition 1990 to 2018 globally
+
+# plots of global number of people living with HIV
+# total population
+hiv_ep_g %>%
+  filter(measure_type == "hiv_burden", age_group == "All", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000") +
+  scale_y_continuous(labels = comma_format()) +
+  scale_x_discrete(breaks = seq(1990, 2018, by = 2)) +
+  labs(x = NULL, y = NULL, 
+       title = "Number of people living with HIV all ages, 1990-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+
+ggsave("global_number_living_w_hiv.png", device = "png", width = 6, height = 3, units = "in")
+
+# adults
+hiv_ep_g %>%
+  filter(measure_type == "hiv_burden", age_group == "Adult (15+)", sex == "all", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000") +
+  scale_y_continuous(labels = comma_format()) +
+  labs(x = NULL, y = NULL, 
+       title = "Number of adults (ages 15 and above) living with HIV, 1990-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+
+# children
+hiv_ep_g %>%
+  filter(measure_type == "hiv_burden", age_group == "Child (0-14)", sex == "all", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000", linejoin = "mitre", linemitre = 10) +
+  scale_y_continuous(labels = comma_format()) +
+  labs(x = NULL, y = NULL, 
+       title = "Number of children (ages 0-14) living with HIV, 1990-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+
+
+# plots of global number of AIDS-related deaths
+# total population
+hiv_ep_g %>%
+  filter(measure_type == "deaths", age_group == "All", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000") +
+  scale_y_continuous(labels = comma_format()) +
+  scale_x_discrete(breaks = seq(1990, 2018, by = 2)) +
+  labs(x = NULL, y = NULL, 
+       title = "Number of annual AIDS-related deaths all ages, 1990-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+
+ggsave("global_aids_deaths.png", device = "png", width = 6, height = 3, units = "in")
+
+# adults
+hiv_ep_g %>%
+  filter(measure_type == "deaths", age_group == "Adult (15+)", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000") +
+  scale_y_continuous(labels = comma_format()) +
+  labs(x = NULL, y = NULL, 
+       title = "Number of annual AIDS-related deaths among adults (ages 15 and above), 1990-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+
+# children
+hiv_ep_g %>%
+  filter(measure_type == "deaths", age_group == "Child (0-14)", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000") +
+  scale_y_continuous(labels = comma_format()) +
+  labs(x = NULL, y = NULL, 
+       title = "Number of annual AIDS-related deaths among children (ages 0-14), 1990-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+
+
+# plots of number of people newly infected with HIV globally
+# total population
+hiv_ep_g %>%
+  filter(measure_type == "new_infections", age_group == "All", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000") +
+  scale_y_continuous(labels = comma_format()) +
+  labs(x = NULL, y = NULL, 
+       title = "Number of people newly infected with HIV, 1990-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+
+# adult
+hiv_ep_g %>%
+  filter(measure_type == "new_infections", age_group == "Adult", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000") +
+  scale_y_continuous(labels = comma_format()) +
+  labs(x = NULL, y = NULL, 
+       title = "Number of adults (ages 15-49) newly infected with HIV, 1990-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+
+# children
+hiv_ep_g %>%
+  filter(measure_type == "new_infections", age_group == "Child (0-14)", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000") +
+  scale_y_continuous(labels = comma_format()) +
+  labs(x = NULL, y = NULL, 
+       title = "Number of children (ages 0-14) newly infected with HIV, 1990-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+
+
+# plots of incidence rate of HIV globally
+# total population
+hiv_ep_g %>%
+  filter(measure_type == "incidence_rate", age_group == "All", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000") +
+  scale_y_continuous() +
+  scale_x_discrete(breaks = seq(1990, 2018, by = 2)) +
+  labs(x = NULL, y = NULL, 
+       title = "New cases of HIV per 1,000 individuals of all ages, 1990-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+
+ggsave("global_incidence_rate_hiv.png", device = "png", width = 6, height = 3, units = "in")
+
+# adult
+hiv_ep_g %>%
+  filter(measure_type == "incidence_rate", age_group == "Adult (15-49)", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000") +
+  scale_y_continuous(labels = comma_format()) +
+  labs(x = NULL, y = NULL, 
+       title = "Incidence rate of HIV among adults (ages 15-49), 1990-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+```
+
+
+```{r}
+# plots of ART coverage 1990 to 2018 globally
+
+# plots of global proportion of people living with HIV on ART
+# total population
+hiv_tx_g %>%
+  filter(measure_type == "hiv_on_art", age_group == "All", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000") +
+  scale_y_continuous(labels = percent_format(scale = 1)) +
+  scale_x_discrete(breaks = seq(2010, 2018, by = 2)) +
+  labs(x = NULL, y = NULL, 
+       title = "Percent of people living with HIV receiving ART, 2010-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+
+# adults
+hiv_tx_g %>%
+  filter(measure_type == "hiv_on_art", age_group == "Adult (15+)", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000") +
+  scale_y_continuous(labels = percent_format(scale = 1)) +
+  scale_x_discrete(breaks = seq(2010, 2018, by = 2)) +
+  labs(x = NULL, y = NULL, 
+       title = "Percent of adults (ages 15 and above) living with HIV receiving ART, 2010-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+
+# children
+hiv_tx_g %>%
+  filter(measure_type == "hiv_on_art", age_group == "Child (0-14)", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000") +
+  scale_y_continuous(labels = percent_format(scale = 1)) +
+  scale_x_discrete(breaks = seq(2010, 2018, by = 2)) +
+  labs(x = NULL, y = NULL, 
+       title = "Percent of children (ages 0-14) living with HIV receiving ART, 2010-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+
+
+# plots of global numbers of people living with HIV on ART
+# total population
+hiv_tx_g %>%
+  filter(measure_type == "number_on_art", age_group == "All", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000") +
+  scale_y_continuous(labels = comma_format()) +
+  scale_x_discrete(breaks = seq(2010, 2018, by = 2)) +
+  labs(x = NULL, y = NULL, 
+       title = "Number of people living with HIV receiving ART, 2010-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+
+# adult
+hiv_tx_g %>%
+  filter(measure_type == "number_on_art", age_group == "Adult (15+)", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000") +
+  scale_y_continuous(labels = comma_format()) +
+  scale_x_discrete(breaks = seq(2010, 2018, by = 2)) +
+  labs(x = NULL, y = NULL, 
+       title = "Number of adults (ages 15 and above) living with HIV receiving ART, 2010-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+
+# children
+hiv_tx_g %>%
+  filter(measure_type == "number_on_art", age_group == "Child (0-14)", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000") +
+  scale_y_continuous(labels = comma_format()) +
+  scale_x_discrete(breaks = seq(2010, 2018, by = 2)) +
+  labs(x = NULL, y = NULL, 
+       title = "Number of children (ages 0-14) living with HIV receiving ART, 2010-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+
+# number pregnant women receiving PMTCT
+hiv_tx_g %>%
+  filter(measure_type == "number_on_pmtct", age_group == "Pregnant", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000") +
+  scale_y_continuous(labels = comma_format()) +
+  scale_x_discrete(breaks = seq(2010, 2018, by = 2)) +
+  labs(x = NULL, y = NULL, 
+       title = "Number of mothers receiving lan effective PMTCT regimen, 2010-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+
+# number pregnant women receiving PMTCT
+hiv_tx_g %>%
+  filter(measure_type == "pmtct_coverage", age_group == "Pregnant", region == "Global") %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci), alpha = 0.3, fill = "#000000") + 
+  geom_line(color = "#000000") +
+  scale_y_continuous(labels = percent_format(scale = 1),
+                     expand = expansion(add = 10)) +
+  scale_x_discrete(breaks = seq(2010, 2018, by = 2)) +
+  labs(x = NULL, y = NULL, 
+       title = "Percent of mothers receiving an effective PMTCT regimen, 2010-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS",
+       caption = "Source: UNAIDS 2019 estimates")
+```
+
+
+
+```{r}
+# plots of epidemic transition 1990 to 2018 by region
 
 # plots of number of people living with HIV by region
 # total population
@@ -634,7 +903,7 @@ hiv_ep_g %>%
        subtitle = "Figure based on modeled estimates from UNAIDS for all ages",
        caption = "Source: UNAIDS special analysis, 2019")
 
-# total population
+# adult
 hiv_ep_g %>%
   filter(measure_type == "incidence_rate", age_group == "Adult (15-49)") %>%
   ggplot(aes(x = year, y = estimate, group = region)) +
