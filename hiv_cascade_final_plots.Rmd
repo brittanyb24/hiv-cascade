@@ -90,10 +90,6 @@ Plot of global number of people living with HIV, all ages, 1990-2018.
 p1_data <- hiv_ep_g %>%
   filter(measure_type == "hiv_burden", age_group == "All", region == "Global")
 
-gtest <- hiv_ep_g %>% filter(measure_type == "new_infections", age_group == "All", region == "Global") %>% ggplot() +
-    stat_smooth(aes(x = as.numeric(year), y = lower_ci), method = "gam", formula = y ~ s(x, bs = "cs"), se = FALSE) +
-    stat_smooth(aes(x = as.numeric(year), y = upper_ci), method = "gam", formula = y ~ s(x, bs = "cs"), se = FALSE)
-
 # calculate smoothed lines for estimate and upper and lower bounds
 g1 <- p1_data %>%
   ggplot() + 
@@ -117,20 +113,107 @@ p1 <- p1_data %>%
               alpha = 0.3, fill = "darkred", inherit.aes = FALSE) + 
   geom_smooth(method = "gam", formula = y ~ s(x, bs = "cs"), 
               color = "darkred", se = FALSE) +
+  scale_x_discrete(breaks = seq(1990, 2018, by = 2)) +
   scale_y_continuous(labels = comma_format(), 
                      limits = c(1000000, 50000000)) +
-  scale_x_discrete(breaks = seq(1990, 2018, by = 2)) +
+  ribbon_theme +
   labs(x = NULL, y = NULL, 
        title = "Number of people living with HIV, all ages, 1990-2018",
        subtitle = "Figure based on modeled estimates from UNAIDS. Shaded area represents range of uncertainty of the estimates.",
        caption = bquote("Source: UNAIDS 2019 "~estimates^TBD)) +
-  ribbon_theme
 
 p1
 
 ggsave("plots/global_number_living_w_hiv.png", plot = p1, device = "png", width = 6, height = 3, units = "in")
 ```
 
+
+Plot of global number of AIDS-related deaths, all ages, 1990-2018.
+```{r global_aids_deaths}
+# define base dataset for plot
+p2_data <- hiv_ep_g %>%
+  filter(measure_type == "deaths", age_group == "All", region == "Global")
+
+# calculate smoothed lines for estimate and upper and lower bounds
+g2 <- p2_data %>%
+  ggplot() + 
+  stat_smooth(aes(x = as.numeric(year), y = estimate), method = "gam", formula = y ~ s(x, bs = "cs"), se = FALSE) +
+  stat_smooth(aes(x = as.numeric(year), y = lower_ci), method = "gam", formula = y ~ s(x, bs = "cs"), se = FALSE) +
+  stat_smooth(aes(x = as.numeric(year), y = upper_ci), method = "gam", formula = y ~ s(x, bs = "cs"), se = FALSE)
+
+# build plot object for rendering 
+gg2 <- ggplot_build(g2)
+
+# extract data to plot the smoothed lines
+df2 <- data.frame(x = gg2$data[[1]]$x,
+                  y = gg2$data[[1]]$y,
+                  ymin = gg2$data[[2]]$y,
+                  ymax = gg2$data[[3]]$y) 
+
+# build plot
+p2 <- p2_data %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(data = df2, aes(x = x, ymin = ymin, ymax = ymax), 
+              alpha = 0.3, fill = "darkred", inherit.aes = FALSE) + 
+  geom_smooth(method = "gam", formula = y ~ s(x, bs = "cs"), 
+              color = "darkred", se = FALSE) +
+  scale_x_discrete(breaks = seq(1990, 2018, by = 2)) +
+  scale_y_continuous(labels = comma_format(), 
+                     limits = c(100000, 2500000)) +
+  ribbon_theme +
+  labs(x = NULL, y = NULL, 
+       title = "Number of annual AIDS-related deaths, all ages, 1990-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS. Shaded area represents range of uncertainty of the estimates.",
+       caption = bquote("Source: UNAIDS 2019 "~estimates^TBD))
+
+p2
+
+ggsave("plots/global_aids_deaths.png", plot = p2, device = "png", width = 6, height = 3, units = "in")
+```
+
+
+Plot of global number of annual new HIV infections, all ages, 1990-2018.
+```{r global_aids_deaths}
+# define base dataset for plot
+p2_data <- hiv_ep_g %>%
+  filter(measure_type == "deaths", age_group == "All", region == "Global")
+
+# calculate smoothed lines for estimate and upper and lower bounds
+g2 <- p2_data %>%
+  ggplot() + 
+  stat_smooth(aes(x = as.numeric(year), y = estimate), method = "gam", formula = y ~ s(x, bs = "cs"), se = FALSE) +
+  stat_smooth(aes(x = as.numeric(year), y = lower_ci), method = "gam", formula = y ~ s(x, bs = "cs"), se = FALSE) +
+  stat_smooth(aes(x = as.numeric(year), y = upper_ci), method = "gam", formula = y ~ s(x, bs = "cs"), se = FALSE)
+
+# build plot object for rendering 
+gg2 <- ggplot_build(g2)
+
+# extract data to plot the smoothed lines
+df2 <- data.frame(x = gg2$data[[1]]$x,
+                  y = gg2$data[[1]]$y,
+                  ymin = gg2$data[[2]]$y,
+                  ymax = gg2$data[[3]]$y) 
+
+# build plot
+p2 <- p2_data %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(data = df2, aes(x = x, ymin = ymin, ymax = ymax), 
+              alpha = 0.3, fill = "darkred", inherit.aes = FALSE) + 
+  geom_smooth(method = "gam", formula = y ~ s(x, bs = "cs"), 
+              color = "darkred", se = FALSE) +
+  scale_x_discrete(breaks = seq(1990, 2018, by = 2)) +
+  scale_y_continuous(labels = comma_format(), 
+                     limits = c(100000, 2500000)) +
+  ribbon_theme +
+  labs(x = NULL, y = NULL, 
+       title = "Number of annual AIDS-related deaths, all ages, 1990-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS. Shaded area represents range of uncertainty of the estimates.",
+       caption = bquote("Source: UNAIDS 2019 "~estimates^TBD))
+
+p2
+
+ggsave("plots/global_aids_deaths.png", plot = p2, device = "png", width = 6, height = 3, units = "in")
+```
 
 
 
