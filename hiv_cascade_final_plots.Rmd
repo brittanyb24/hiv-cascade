@@ -1,0 +1,137 @@
+---
+title: "HIV Treatment Cascade - Final Plots"
+author: "Brittany Bowman"
+date: "10/22/2019"
+output: html_document
+runtime: shiny
+---
+
+This file provides a script for the finalized, polished plots for analysis of HIV treatment cascade.
+
+```{r setup, include=FALSE echo=FALSE}
+# load necessary packages
+library(tidyverse)
+library(knitr)
+library(shiny)
+library(plotly)
+library(scales)
+library(ggthemes)
+library(RColorBrewer)
+library(grDevices)
+library(plotlyGeoAssets)
+library(maptools)
+library(sf)
+library(rworldmap)
+library(cleangeo)
+
+# get working directory
+orig_dir <- getwd()
+print(orig_dir)
+
+# load tidy datasets (g = global datasets, c = country datasets)
+full_cascade_g <- read_rds("data/tidy_data/full_cascade_global_tidy")
+full_cascade_c <- read_rds("data/tidy_data/full_cascade_country_tidy")
+
+know_status_g <- read_rds("data/tidy_data/know_status_all_global_tidy")
+know_status_c <- read_rds("data/tidy_data/know_status_all_country_tidy")
+
+on_art_g <- read_rds("data/tidy_data/on_art_all_global_tidy")
+on_art_c <- read_rds("data/tidy_data/on_art_all_country_tidy")
+
+vl_suppress_g <- read_rds("data/tidy_data/vl_suppress_all_global_tidy")
+vl_suppress_c <- read_rds("data/tidy_data/vl_suppress_all_country_tidy")
+
+hiv_ep_g <- read_rds("data/tidy_data/tidy_hiv_ep_g")
+hiv_ep_c <- read_rds("data/tidy_data/tidy_hiv_ep_c")
+hiv_tx_g <- read_rds("data/tidy_data/tidy_hiv_tx_g")
+hiv_tx_c <- read_rds("data/tidy_data/tidy_hiv_tx_c")
+
+# set plots directory for remainder of the work flow
+knitr::opts_chunk$set(fig.ext="png", fig.width=6, fig.height=3, fig.path='plots/')
+```
+
+
+```{r define-themes}
+# define color palettes (RBrewerPal palette Set1 with black inserted for global)
+custom_palette <- c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#000000", "#FF7F00", "#FFFF33", "#A65628", "#F781BF")
+
+# define base custom theme 
+custom_theme <- theme_tufte() +
+                theme(
+                  text = element_text(family = "Helvetica"),
+                  plot.title = element_text(face = "bold", size = 14, color = "black"),
+                  plot.title.position = "plot",
+                  plot.subtitle = element_text(margin = margin(b = 16), size = 10),
+                  plot.caption = element_text(hjust = 0, margin = margin(t = 12)),
+                  plot.caption.position = "plot",
+                  axis.line.x = element_line(colour = "grey20", size = 0.25, linetype = "solid"),                   
+                  axis.line.y = element_line(colour = "grey20", size = 0.25, linetype = "solid"),
+                  axis.text = element_text(size = 10),
+                  legend.title = element_blank(),
+                  legend.text = element_text(size = 10)
+                )
+
+theme_set(custom_theme)
+
+# define custom theme for ribbon plots
+ribbon_theme <- custom_theme +
+                theme(
+                  panel.grid.major.y = element_line(linetype = 3, color = alpha("grey80", alpha = .7)),
+                  axis.line.x.bottom = element_blank(),
+                  axis.line.y.left = element_blank(),
+                  axis.ticks = element_blank()
+                )
+```
+
+
+Plot of global number of people living with HIV, all ages, 1990-2018.
+```{r global_number_living_w_hiv}
+# define base dataset for plot
+p1_data <- hiv_ep_g %>%
+  filter(measure_type == "hiv_burden", age_group == "All", region == "Global")
+
+gtest <- hiv_ep_g %>% filter(measure_type == "new_infections", age_group == "All", region == "Global") %>% ggplot() +
+    stat_smooth(aes(x = as.numeric(year), y = lower_ci), method = "gam", formula = y ~ s(x, bs = "cs"), se = FALSE) +
+    stat_smooth(aes(x = as.numeric(year), y = upper_ci), method = "gam", formula = y ~ s(x, bs = "cs"), se = FALSE)
+
+# calculate smoothed lines for estimate and upper and lower bounds
+g1 <- p1_data %>%
+  ggplot() + 
+  stat_smooth(aes(x = as.numeric(year), y = estimate), method = "gam", formula = y ~ s(x, bs = "cs"), se = FALSE) +
+  stat_smooth(aes(x = as.numeric(year), y = lower_ci), method = "gam", formula = y ~ s(x, bs = "cs"), se = FALSE) +
+  stat_smooth(aes(x = as.numeric(year), y = upper_ci), method = "gam", formula = y ~ s(x, bs = "cs"), se = FALSE)
+
+# build plot object for rendering 
+gg1 <- ggplot_build(g1)
+
+# extract data to plot the smoothed lines
+df1 <- data.frame(x = gg1$data[[1]]$x,
+                  y = gg1$data[[1]]$y,
+                  ymin = gg1$data[[2]]$y,
+                  ymax = gg1$data[[3]]$y) 
+
+# build plot
+p1 <- p1_data %>%
+  ggplot(aes(x = year, y = estimate, group = region)) +
+  geom_ribbon(data = df1, aes(x = x, ymin = ymin, ymax = ymax), 
+              alpha = 0.3, fill = "darkred", inherit.aes = FALSE) + 
+  geom_smooth(method = "gam", formula = y ~ s(x, bs = "cs"), 
+              color = "darkred", se = FALSE) +
+  scale_y_continuous(labels = comma_format(), 
+                     limits = c(1000000, 50000000)) +
+  scale_x_discrete(breaks = seq(1990, 2018, by = 2)) +
+  labs(x = NULL, y = NULL, 
+       title = "Number of people living with HIV, all ages, 1990-2018",
+       subtitle = "Figure based on modeled estimates from UNAIDS. Shaded area represents range of uncertainty of the estimates.",
+       caption = bquote("Source: UNAIDS 2019 "~estimates^TBD)) +
+  ribbon_theme
+
+p1
+
+ggsave("plots/global_number_living_w_hiv.png", plot = p1, device = "png", width = 6, height = 3, units = "in")
+```
+
+
+
+
+
