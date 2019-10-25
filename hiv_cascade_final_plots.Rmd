@@ -119,7 +119,7 @@ p1 <- p1_data %>%
   ribbon_theme +
   labs(x = NULL, y = NULL, 
        title = "Number of people living with HIV, all ages, 1990-2018",
-       subtitle = "Figure based on modeled estimates from UNAIDS. Shaded area represents range of uncertainty of the estimates.",
+       subtitle = "Figure based on modeled estimates from UNAIDS. Shaded area represents range of \nuncertainty of the estimates.",
        caption = bquote("Source: UNAIDS 2019 "~estimates^TBD))
 
 p1
@@ -157,7 +157,6 @@ p2 <- p2_data %>%
               alpha = 0.3, fill = "darkred", inherit.aes = FALSE) + 
   geom_smooth(method = "gam", formula = y ~ s(x, bs = "cs"), 
               color = "darkred", se = FALSE) +
-  geom_point(data = df2[df2$y == max(df2$y), ], aes(x = x, y = y), inherit.aes = FALSE, size = 2) +
   scale_x_discrete(breaks = seq(1990, 2018, by = 2)) +
   scale_y_continuous(labels = comma_format(), 
                      limits = c(100000, 2500000)) +
@@ -165,20 +164,22 @@ p2 <- p2_data %>%
   labs(x = NULL, y = NULL, 
        title = "Annual number of AIDS-related deaths, all ages, 1990-2018",
        subtitle = "Figure based on modeled estimates from UNAIDS. Shaded area represents range of \nuncertainty of the estimates.",
-       caption = bquote("Source: UNAIDS 2019 "~estimates^TBD)) +
-  annotate("text", x = 24.5, y = 1700000, 
-           label = "paste(\"Annual number of AIDS-related deaths \\npeaked globally at \")",
-           parse = TRUE, size = 2, color = "grey20") +
-  annotate("text", x = 26.2, y = 1710000,
-           label = "paste(phantom(bold(\"1.7 million\")) * \" in \" * phantom(bold(\"2004\")))",
-           parse = TRUE, size = 2, color = "grey20") + 
-  annotate("text", x = 26.2, y = 1710000,
-           label = "paste(bold(\"1.7 million\") * phantom(\" in \") * bold(\"2004\"))",
-           parse = TRUE, size = 2, color = "darkred") +
-  annotate("curve", x = 20.5, xend = 15.45, y = 1800000, yend = 1745000, 
-           curvature = 0.2, angle = 90,
-           arrow = arrow(length = unit(0.02, "npc")),
-           color = "grey20", size = 0.3)
+       caption = bquote("Source: UNAIDS 2019 "~estimates^TBD))
+
+  # geom_point(data = df2[df2$y == max(df2$y), ], aes(x = x, y = y), inherit.aes = FALSE, size = 2) +
+  # annotate("text", x = 24.5, y = 1700000, 
+  #          label = "paste(\"Annual number of AIDS-related deaths \\npeaked globally at \")",
+  #          parse = TRUE, size = 2.5, color = "grey20") +
+  # annotate("text", x = 26.2, y = 1710000,
+  #          label = "paste(phantom(bold(\"1.7 million\")) * \" in \" * phantom(bold(\"2004\")))",
+  #          parse = TRUE, size = 2.5, color = "grey20") + 
+  # annotate("text", x = 26.2, y = 1710000,
+  #          label = "paste(bold(\"1.7 million\") * phantom(\" in \") * bold(\"2004\"))",
+  #          parse = TRUE, size = 2.5, color = "darkred") +
+  # annotate("curve", x = 20.5, xend = 15.45, y = 1800000, yend = 1745000, 
+  #          curvature = 0.2, angle = 90,
+  #          arrow = arrow(length = unit(0.02, "npc")),
+  #          color = "grey20", size = 0.3)
 
 p2
 
@@ -221,7 +222,7 @@ p3 <- p3_data %>%
   ribbon_theme +
   labs(x = NULL, y = NULL, 
        title = "Number of people newly infected with HIV, all ages, 1990-2018",
-       subtitle = "Figure based on modeled estimates from UNAIDS. Shaded area represents range of uncertainty of the estimates.",
+       subtitle = "Figure based on modeled estimates from UNAIDS. Shaded area represents range of \nuncertainty of the estimates.",
        caption = bquote("Source: UNAIDS 2019 "~estimates^TBD))
 
 p3

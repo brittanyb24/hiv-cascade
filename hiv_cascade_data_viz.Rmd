@@ -581,7 +581,7 @@ hiv_ep_g %>%
   geom_line(color = "#000000") +
   scale_y_continuous(labels = comma_format()) +
   labs(x = NULL, y = NULL, 
-       title = "Number of people newly infected with HIV, 1990-2018",
+       title = "Number of people newly infected with HIV, all ages, 1990-2018",
        subtitle = "Figure based on modeled estimates from UNAIDS",
        caption = "Source: UNAIDS 2019 estimates")
 
