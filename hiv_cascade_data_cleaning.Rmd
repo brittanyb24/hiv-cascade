@@ -11,9 +11,6 @@ This file provides a script for cleaning the HIV treatment cascade data from UNA
 ```{r setup, include=FALSE echo = FALSE}
 # load necessary packages
 library(tidyverse)
-library(shiny)
-library(plotly)
-library(scales)
 
 # get working directory
 getwd()

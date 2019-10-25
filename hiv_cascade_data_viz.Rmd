@@ -733,7 +733,7 @@ hiv_tx_g %>%
   scale_y_continuous(labels = comma_format()) +
   scale_x_discrete(breaks = seq(2010, 2018, by = 2)) +
   labs(x = NULL, y = NULL, 
-       title = "Number of mothers receiving lan effective PMTCT regimen, 2010-2018",
+       title = "Number of mothers receiving an effective PMTCT regimen, 2010-2018",
        subtitle = "Figure based on modeled estimates from UNAIDS",
        caption = "Source: UNAIDS 2019 estimates")
 
